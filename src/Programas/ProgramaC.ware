@@ -1,0 +1,27 @@
+CLASE principal{
+
+    CONF FREC alerta = 20;
+    CONF COLOR colorVacio = #70FF00; 
+    CONF CAD producto = 'Zucaritas';
+
+    
+    DEF revisar(){
+      SI(REVISAR(colorVacio,12) == VERDADERO){
+        SOLTAR();
+        
+      }SINO{
+        ALARMA(alerta);
+	regresarProducto();
+       
+      }
+    }//revisar
+
+    DEF regresarProducto(){
+      ATRAS(3,1);
+      IZQUIERDA(1,1);
+      ATRAS(1,1);
+    }//rergesarProducto
+ 
+
+    
+}//CLASE

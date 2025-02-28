@@ -1,0 +1,75 @@
+CLASE busqueda{
+//DECLARACION DE VARIABLES
+CONF COLOR colorVacio = #70FF00;
+CONF CAD fin = 'Finalización de la revision';
+CONF CAD cajaVacia = 'Caja vacia';
+CONF CAD cajaLlena = 'Producto tomado';
+CONF FREC alarm = 20;
+CONF MINI x = 1;
+VECT CAD buscados = ['Zucaritas','Pan Bimbo','Canelitas'];
+VECT CAD estado [3];
+
+
+DEF tomarHay(){
+     SI(REVISAR(#70FF00,12)==FALSO){
+      TOMAR();
+      IMPR('C',LCD);
+   }SINO{
+      IMPR('t',LCD);
+      ALARMA(alarm);
+   }
+
+}
+
+
+//DECLARACION METODOS
+DEF recorridoZucaritas(){
+REPETIR(3){
+   SI(VERADELANTE()==VERDADERO){
+      ADELANTE(4,2);
+   }SINO{
+      PARAR();
+      IMPR('obstruccion',LCD);
+
+   }
+ }
+
+}
+
+DEF recorridoPan(){
+ REPETIR(2){
+   SI(VERDERECHA()==VERDADERO){
+      IZQUIERDA(2,2);
+   }SINO{
+      PARAR();
+      IMPR('obstruccion',LCD);
+
+   }
+ }
+
+}
+
+DEF recorridoCanelitas(){
+ REPETIR(4){
+   SI(VERDERECHA()==VERDADERO){
+      DERECHA(2,2);
+   }SINO{
+      PARAR();
+      IMPR('obstruccion',LCD);
+
+   }
+ }
+
+}
+
+DEF principal(){
+   recorridoZucaritas();
+   tomarHay();  
+   recorridoPan();
+   tomarHay();  
+   recorridoCanelitas();
+   tomarHay();   
+
+ }
+
+}//CLAASE

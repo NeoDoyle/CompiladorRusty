@@ -1,0 +1,36 @@
+CLASE programaB{
+   CONF CAD pan = 'Wrexler';
+   CONF COLOR colorPan = #000000;
+   CONF FREC a = 25;
+   
+DEF recorrido(){
+   MIENTRAS(VERADELANTE()==VERDADERO){
+      ADELANTE(1,2);
+   }
+   SI(VERIZQUIERDA()==VERDADERO){
+      IZQUIERDA(3,1);
+   }
+   SI(VERATRAS()==VERDADERO){
+      ATRAS(4,2);
+      
+   }
+}
+
+DEF regreso(){
+   MIENTRAS(VERATRAS()==VERDADERO){
+      ATRAS(1,2);
+   }
+   SI(VERDERECHA()==VERDADERO){
+      DERECHA(3,1);
+   }
+}
+
+DEF principal(){
+   recorrido();
+   SI(REVISAR(colorPan,125)==VERDADERO){
+      ALARMA(a);
+   }
+   regreso();
+}
+
+}//CLASE
