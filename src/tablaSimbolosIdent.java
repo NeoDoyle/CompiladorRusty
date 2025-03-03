@@ -34,7 +34,7 @@ public class tablaSimbolosIdent extends javax.swing.JDialog {
     
     public void llenarTabla(){
         
-        String columna[] = {"Identificador", "Tipo de Dato", "Valor", "Declarado", "Referencias"};
+        String columna[] = {"Identificador", "Tipo de Dato", "Valor", "Declarado", "Ambito"};
         tabla.setColumnIdentifiers(columna);
 
         int rowCount = tabla.getRowCount();
