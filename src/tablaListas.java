@@ -38,7 +38,7 @@ public class tablaListas extends javax.swing.JDialog {
         tabla.setColumnIdentifiers(columna); 
 
         
-         int rowCount = tabla.getRowCount();
+        int rowCount = tabla.getRowCount();
         for (int i = rowCount - 1; i >= 0; i--) {
             tabla.removeRow(i);
         }
