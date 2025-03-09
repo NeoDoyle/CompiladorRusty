@@ -6,10 +6,7 @@
  * and open the template in the editor.
  */
 
-/**
- *
- * @author rebek
- */
+
 public class ExecutarJFlex {
 
     /**

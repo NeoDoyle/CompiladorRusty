@@ -9,10 +9,7 @@ import javax.swing.table.DefaultTableModel;
  * and open the template in the editor.
  */
 
-/**
- *
- * @author rebek
- */
+
 public class tablaTokens extends javax.swing.JDialog {
   DefaultTableModel tabla = new DefaultTableModel();
     private ArrayList<String[]> simbolos;
