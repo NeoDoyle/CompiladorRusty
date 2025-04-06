@@ -76,7 +76,13 @@ public class Compilador extends javax.swing.JFrame {
     private ArrayList<Production> asignVec;
     private ArrayList<Production> expRel;
     
-    //rest
+    //Codigo intermedio
+    String codigoIntermedio;
+    String cuidameloTantito;
+     //PARA el ASM
+    String data,code,proc;
+    private codigoIntermedio pantallaCodIn;
+
 
     /**
      * Creates new form Compilador
@@ -96,7 +102,7 @@ public class Compilador extends javax.swing.JFrame {
         tabla = new tablaSimbolosIdent(this, true);
         tablaV = new tablaListas(this, true);
         tablaT = new tablaTokens(this, true);
-        //rest
+        pantallaCodIn = new codigoIntermedio(this,true);
 
         setTitle(titulo);
         directorio = new Directory(this, areaCodigo, titulo, ".ware");
@@ -146,7 +152,13 @@ public class Compilador extends javax.swing.JFrame {
         funcRepetir = new ArrayList<>();
         errores = new ArrayList();
         textocolor = new ArrayList<>();
-        
+        //Generar codigo intermedio
+        codigoIntermedio = "";
+        cuidameloTantito = "";
+         //Generar el asm
+        data="";
+        code="";
+        proc="";
         estadoCompilacion = false;
         //tablaSimbolos.setVisible(false);
     }
@@ -184,6 +196,7 @@ public class Compilador extends javax.swing.JFrame {
         btnGuardar = new javax.swing.JButton();
         btnGuardarC = new javax.swing.JButton();
         btnCompilar = new javax.swing.JButton();
+        jButton4 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -418,6 +431,15 @@ public class Compilador extends javax.swing.JFrame {
                 .addGap(0, 1, Short.MAX_VALUE))
         );
 
+        jButton4.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/9928199 (4).png"))); // NOI18N
+        jButton4.setText("Intermedio");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+
         jMenuBar1.setBackground(java.awt.SystemColor.textHighlight);
         jMenuBar1.setForeground(new java.awt.Color(255, 153, 0));
         setJMenuBar(jMenuBar1);
@@ -432,9 +454,10 @@ public class Compilador extends javax.swing.JFrame {
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 101, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(26, 26, 26))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jScrollPane2))
                 .addContainerGap())
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -443,15 +466,21 @@ public class Compilador extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addContainerGap(17, Short.MAX_VALUE))
         );
 
         panelButtonCompilerExecute.getAccessibleContext().setAccessibleName("");
@@ -485,7 +514,7 @@ public class Compilador extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarCActionPerformed
 
     private void btnCompilarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCompilarActionPerformed
-        if (getTitle().contains("*") || getTitle().equals(titulo)) { //Si no se ha guardadp se llama a SAVE()
+        if (getTitle().contains("*") || getTitle().equals(titulo)) { //Si no se ha guardado se llama a SAVE()
             if (directorio.Save()) {
                 compile();
             }
@@ -502,6 +531,15 @@ public class Compilador extends javax.swing.JFrame {
        tabla.setVisible(true);
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        if(estadoCompilacion){
+           pantallaCodIn.setVisible(true); 
+        }else{
+            JOptionPane.showMessageDialog(null, "No se ha compilado el programa, no se puede mostrar esto...",
+                    "Error en la generacion de codigo", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
     private void compile() {
         limpiarAreaCodigo();
         analisisLexico();
@@ -514,6 +552,19 @@ public class Compilador extends javax.swing.JFrame {
         estadoCompilacion = true;
         //rest
         
+         //Se genera el codigo intermedio aqui en caliente.
+        if(errores.isEmpty()){
+            ArrayList<String> codigoDividido = Functions.splitCodeInCodeBlocks(tokens, "{", "}", ";").getBlocksOfCodeInOrderOfExec();
+            generarCodigoIntermedio(codigoDividido,1);
+        }else{
+            JOptionPane.showMessageDialog(null, "No se puede generar el codigo intermedio porque el programa contiene errores...",
+                    "Error en la generacion de codigo", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        codigoIntermedio+=" \n"+cuidameloTantito;
+        data+=code+proc;
+        pantallaCodIn.setCodigo(codigoIntermedio);
+       
         
         jButton1.setEnabled(estadoCompilacion);
     }
@@ -1729,7 +1780,7 @@ public class Compilador extends javax.swing.JFrame {
                         errores.add(new ErrorLSSL(55, "Error Semantico {} en la linea #, la variable no ha sido declarada", exp, true));
                         break;
                     }
-                    //Ahora a ver q pedo con el otro operador
+                    //Ahora el otro operador
                     if(exp.lexicalCompRank(-1).equals("Identificador")){
                         String id2 = exp.lexemeRank(-1);
                         String td2 = "";
@@ -1879,12 +1930,209 @@ public class Compilador extends javax.swing.JFrame {
                 }   
                 
         }else if(!r.lexicalCompRank(2).equals("Numero_Entero") && !r.lexicalCompRank(2).equals("Numero_Mini")){
-                errores.add(new ErrorLSSL(3,"Error Semantico {} en la linea #, La condición de repitr no es número entero",r,true));
+                errores.add(new ErrorLSSL(3,"Error Semantico {} en la linea #, La condición de repetir no es número entero",r,true));
                 
               } 
         }//for repetir
         
     }//FIN SEMANTICO
+    
+ private int cLBL = 1, ccc = 0;
+
+ private void generarCodigoIntermedio(ArrayList<String> codigoDiv, int control) {
+    int temp = 0;
+    // Recorre cada bloque de código delimitado por { y }
+    for (int x = 0; x < codigoDiv.size(); x++) {
+        String bloquesCod = codigoDiv.get(x);
+        // Separa las sentencias usando ";" como delimitador
+        String[] sentencias = bloquesCod.split(";");
+        for (String sentencia : sentencias) {
+            // Elimina espacios al inicio y final
+            sentencia = sentencia.trim();
+            if (sentencia.isEmpty()) {
+                continue;
+            }
+            // Caso: Declaración de clase (inicialización del programa)
+            if (sentencia.startsWith("CLASE")) {
+                codigoIntermedio += "INICIO: \n";
+                // Aquí se podrían agregar comentarios o instrucciones propias del intermedio
+            }
+            // Caso: Configuración de variables (CONF)
+            else if (sentencia.startsWith("CONF")) {
+                String s[] = sentencia.split(" ");
+                if (s.length > 3) {
+                    switch (s[1]) {
+                        case "BOOL":
+                            codigoIntermedio += "   " + s[2] + " = " + s[4].charAt(0) + "\n";
+                            break;
+                        case "COLOR":
+                            codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4])) + "\n";
+                            break;
+                        case "CAD":
+                            codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4]), sentencia.lastIndexOf("'")) + "\n";
+                            break;
+                        default:
+                            codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4])) + "\n";
+                            break;
+                    }
+                } else {
+                    switch (s[1]) {
+                        case "CAD":
+                            codigoIntermedio += "   " + s[2] + " = ''\n";
+                            break;
+                        case "FREC":
+                            codigoIntermedio += "   " + s[2] + " = 20\n";
+                            break;
+                        case "BOOL":
+                            codigoIntermedio += "   " + s[2] + " = V\n";
+                            break;
+                        case "COLOR":
+                            codigoIntermedio += "   " + s[2] + " = #000000\n";
+                            break;
+                        default:
+                            codigoIntermedio += "   " + s[2] + " = 0\n";
+                            break;
+                    }
+                }
+            }
+            // Caso: Declaración de vectores (VECT)
+            else if (sentencia.startsWith("VECT")) {
+                String s[] = sentencia.split(" ");
+                if (s[3].equals("=")) {
+                    codigoIntermedio += "   " + s[2] + " = " 
+                        + sentencia.substring(sentencia.indexOf(s[4]), sentencia.length() - 1) + "]\n";
+                } else {
+                    int t = Integer.parseInt(s[4]);
+                    String l = "";
+                    for (int i = 0; i < t; i++) {
+                        l += " 0 ,";
+                    }
+                    codigoIntermedio += "   " + s[2] + " = [" + l.substring(0, l.lastIndexOf(",")) + "]\n";
+                }
+            }
+            // Caso: Definición de procedimientos (DEF)
+            else if (sentencia.startsWith("DEF")) {
+                String s[] = sentencia.split(" ");
+                if (s[1].equals("principal")) {
+                    codigoIntermedio += "\nPRINCIPAL:\n";
+                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 1);
+                    x = pos[1];
+                    codigoIntermedio += "FIN\n";
+                    break;
+                } else {
+                    codigoIntermedio += "PROC " + s[1] + ":\n";
+                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 2);
+                    x = pos[1];
+                    codigoIntermedio += "FIN PROC\n\n";
+                    break;
+                }
+            }
+            // Caso: Asignaciones y operaciones aritméticas
+            else if (sentencia.split(" ")[0].matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")) {
+                if (sentencia.endsWith(")")) {
+                    codigoIntermedio += "   Call " + sentencia.substring(0, sentencia.length() - 3) + "\n";
+                } else {
+                    String local = "";
+                    String t[] = sentencia.split(" ");
+                    if (t[1].startsWith("=")) {
+                        local += "   " + t[0] + " = " + t[t.length - 1] + "\n";
+                    } else if (t[1].startsWith("+") || t[1].startsWith("-")) {
+                        temp++;
+                        local += "   T" + temp + " = " + t[0] + t[1].charAt(0) + t[t.length - 1] + "\n";
+                        local += "   " + t[0] + " = " + "T" + temp + "\n";
+                    } else if (t[2].matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")) {
+                        temp++;
+                        local += "   T" + temp + " = " + t[2] + "\n";
+                        local += "   " + t[0] + "[T" + temp + "] = " + sentencia.substring(sentencia.indexOf("=") + 1) + "\n";
+                    } else {
+                        temp++;
+                        local += "   T" + temp + " = " + t[2] + "\n";
+                        local += "   " + t[0] + "[T" + temp + "] = " + sentencia.substring(sentencia.indexOf("=") + 1) + "\n";
+                    }
+                    codigoIntermedio += local;
+                }
+            }
+            // Caso: Estructuras de control condicional (SI/SINO)
+            else if (sentencia.startsWith("SI") || sentencia.startsWith("SINO")) {
+                String local = "LBL" + (cLBL++) + ":\n";
+                if (sentencia.startsWith("SI ")) {
+                    local += "    if " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")"))
+                            + " goto LBL" + (cLBL) + "\n"
+                            + "   goto LBL" + (cLBL + 1) + "\n";
+                } else { // SINO
+                    local = " goto LBL" + (cLBL + 1) + "\n";
+                }
+                codigoIntermedio += local + "LBL" + (cLBL) + ":\n";
+                int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                x = pos[1];
+                if (sentencia.startsWith("SINO")) {
+                    codigoIntermedio += "LBL" + (++cLBL) + ":\n";
+                }
+                break;
+            }
+            // Caso: Bucle MIENTRAS
+            else if (sentencia.startsWith("MIENTRAS")) {
+                int sp;
+                codigoIntermedio += "LBL" + cLBL + ":\n";
+                sp = cLBL;
+                codigoIntermedio += " if " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")"))
+                        + " goto LBL" + (++cLBL) + "\n"
+                        + "   goto LBL" + (cLBL + 1) + "\n"
+                        + "LBL" + cLBL + ":\n";
+                int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                x = pos[1];
+                codigoIntermedio += " goto LBL" + sp + "\n" + "LBL" + (++cLBL) + ":\n";
+                break;
+            }
+            // Caso: Bucle REPETIR
+            else if (sentencia.startsWith("REPETIR")) {
+                codigoIntermedio += "LBL" + (++cLBL) + ":\n";
+                codigoIntermedio += " REPETIR , " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+                int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                x = pos[1];
+                codigoIntermedio += " LOOP LBL" + cLBL + "\n";
+                cLBL++;
+                break;
+            }
+            // Caso: Macros o llamadas a funciones específicas
+            else if (sentencia.startsWith("ADELANTE")) {
+                codigoIntermedio += "   MACRO_ADELANTE " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("ATRAS")) {
+                codigoIntermedio += "   MACRO_ATRAS " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("IZQUIERDA")) {
+                codigoIntermedio += "   MACRO_IZQUIERDA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("DERECHA")) {
+                codigoIntermedio += "   MACRO_DERECHA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("PARAR")) {
+                codigoIntermedio += "   MACRO_PARAR\n";
+            } else if (sentencia.startsWith("REVISAR")) {
+                codigoIntermedio += "   MACRO_REVISAR " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("IMPRVECTOR")) {
+                codigoIntermedio += "   MACRO_IMPR_VECTOR " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("IMPR")) {
+                codigoIntermedio += "   MACRO_IMPR " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("ALARMA")) {
+                codigoIntermedio += "   MACRO_ALARMA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            } else if (sentencia.startsWith("TOMAR")) {
+                codigoIntermedio += "   MACRO_TOMAR\n";
+            } else if (sentencia.startsWith("SOLTAR")) {
+                codigoIntermedio += "   MACRO_SOLTAR\n";
+            } else if (sentencia.startsWith("CAJA")) {
+                codigoIntermedio += "   MACRO_CAJA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
+            }
+        } // Fin de for de sentencias
+    } // Fin de for de bloques de código
+}
     
     private void cambioColor() {
         /* Limpiar el arreglo de colores */
@@ -2075,6 +2323,7 @@ public class Compilador extends javax.swing.JFrame {
     private javax.swing.JTextPane consola;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;

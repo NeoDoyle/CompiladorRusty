@@ -7,7 +7,6 @@ CONF CAD cajaLlena = 'Caja llena';
 CONF FREC alarm = 20;
 CONF MINI x = 1;
 VECT CAD buscados = ['Zucaritas','Pan Bimbo','Canelitas'];
-VECT CAD estado [3];
 
 
 DEF tomarHay(){
@@ -27,6 +26,7 @@ DEF recorridoZucaritas(){
 REPETIR(3){
    SI(VERADELANTE()==VERDADERO){
 CONF CAD cajaLlena2 = 'Producto tomado';
+	buscados[x] = 'bueno';
       ADELANTE(4,2);
    }SINO{
       PARAR();
