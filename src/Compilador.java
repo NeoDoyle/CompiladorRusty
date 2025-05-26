@@ -27,8 +27,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.Timer;
@@ -79,10 +83,14 @@ public class Compilador extends javax.swing.JFrame {
     //Codigo intermedio
     String codigoIntermedio;
     String cuidameloTantito;
+    
+    //Codigo optimizado
+    String codigoOptimizado;
+    
      //PARA el ASM
     String data,code,proc;
     private codigoIntermedio pantallaCodIn;
-
+    private codigoOptimizado pantallaCodOp;
 
     /**
      * Creates new form Compilador
@@ -103,7 +111,7 @@ public class Compilador extends javax.swing.JFrame {
         tablaV = new tablaListas(this, true);
         tablaT = new tablaTokens(this, true);
         pantallaCodIn = new codigoIntermedio(this,true);
-
+        pantallaCodOp = new codigoOptimizado(this,true);
         setTitle(titulo);
         directorio = new Directory(this, areaCodigo, titulo, ".ware");
         addWindowListener(new WindowAdapter() {// Método para preguntar al cerrar, si no se ha guardado
@@ -154,6 +162,7 @@ public class Compilador extends javax.swing.JFrame {
         textocolor = new ArrayList<>();
         //Generar codigo intermedio
         codigoIntermedio = "";
+        codigoOptimizado = "";
         cuidameloTantito = "";
          //Generar el asm
         data="";
@@ -197,6 +206,7 @@ public class Compilador extends javax.swing.JFrame {
         btnGuardarC = new javax.swing.JButton();
         btnCompilar = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
+        jButton5 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -440,6 +450,15 @@ public class Compilador extends javax.swing.JFrame {
             }
         });
 
+        jButton5.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        jButton5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/9928199 (4).png"))); // NOI18N
+        jButton5.setText("Optimizado");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+
         jMenuBar1.setBackground(java.awt.SystemColor.textHighlight);
         jMenuBar1.setForeground(new java.awt.Color(255, 153, 0));
         setJMenuBar(jMenuBar1);
@@ -457,30 +476,32 @@ public class Compilador extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jScrollPane2))
-                .addContainerGap())
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(14, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2)))
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(13, 13, 13))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jButton4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton5))
+                    .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(17, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
 
         panelButtonCompilerExecute.getAccessibleContext().setAccessibleName("");
@@ -540,6 +561,15 @@ public class Compilador extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton4ActionPerformed
 
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        if(estadoCompilacion){
+           pantallaCodOp.setVisible(true); 
+        }else{
+            JOptionPane.showMessageDialog(null, "No se ha compilado el programa, no se puede mostrar esto...",
+                    "Error en la optimizacion de codigo", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton5ActionPerformed
+
     private void compile() {
         limpiarAreaCodigo();
         analisisLexico();
@@ -556,6 +586,7 @@ public class Compilador extends javax.swing.JFrame {
         if(errores.isEmpty()){
             ArrayList<String> codigoDividido = Functions.splitCodeInCodeBlocks(tokens, "{", "}", ";").getBlocksOfCodeInOrderOfExec();
             generarCodigoIntermedio(codigoDividido,1);
+            optimizarCodigoIntermedio(codigoIntermedio);
         }else{
             JOptionPane.showMessageDialog(null, "No se puede generar el codigo intermedio porque el programa contiene errores...",
                     "Error en la generacion de codigo", JOptionPane.ERROR_MESSAGE);
@@ -564,7 +595,8 @@ public class Compilador extends javax.swing.JFrame {
         codigoIntermedio+=" \n"+cuidameloTantito;
         data+=code+proc;
         pantallaCodIn.setCodigo(codigoIntermedio);
-       
+        pantallaCodOp.setCodigo(codigoOptimizado);
+        System.out.println("Codigo Optimizado Print: " + codigoOptimizado);
         
         jButton1.setEnabled(estadoCompilacion);
     }
@@ -1955,7 +1987,7 @@ public class Compilador extends javax.swing.JFrame {
             // Caso: Declaración de clase (inicialización del programa)
             if (sentencia.startsWith("CLASE")) {
                 codigoIntermedio += "INICIO: \n";
-                // Aquí se podrían agregar comentarios o instrucciones propias del intermedio
+                
             }
             // Caso: Configuración de variables (CONF)
             else if (sentencia.startsWith("CONF")) {
@@ -2020,7 +2052,7 @@ public class Compilador extends javax.swing.JFrame {
                     generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 1);
                     x = pos[1];
                     codigoIntermedio += "FIN\n";
-                    break;
+                    break; 
                 } else {
                     codigoIntermedio += "PROC " + s[1] + ":\n";
                     int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
@@ -2093,17 +2125,38 @@ public class Compilador extends javax.swing.JFrame {
                 break;
             }
             // Caso: Bucle REPETIR
-            else if (sentencia.startsWith("REPETIR")) {
-                codigoIntermedio += "LBL" + (++cLBL) + ":\n";
-                codigoIntermedio += " REPETIR , " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-                int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
-                x = pos[1];
-                codigoIntermedio += " LOOP LBL" + cLBL + "\n";
-                cLBL++;
-                break;
-            }
+else if (sentencia.startsWith("REPETIR")) {
+    // 1) Reserva el número de etiqueta para el bucle
+    int lblInicio = ++cLBL;
+
+    // 2) Emite la etiqueta de entrada
+    codigoIntermedio += "LBL" + lblInicio + ":\n";
+
+    // 3) Asegura que cualquier nueva etiqueta comience en lblInicio+1
+    cLBL = lblInicio + 1;
+
+    // 4) Emite la instrucción REPETIR , N
+    String veces = sentencia.substring(
+        sentencia.indexOf("(") + 1,
+        sentencia.lastIndexOf(")")
+    );
+    codigoIntermedio += " REPETIR , " + veces + "\n";
+
+    // 5) Genera el cuerpo recursivamente
+    int[] pos = CodeBlock.getPositionOfBothMarkers(
+        codigoDiv,
+        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1)
+    );
+    generarCodigoIntermedio(
+        new ArrayList<>(codigoDiv.subList(pos[0], pos[1])),
+        control
+    );
+    x = pos[1];
+
+    // 6) Cierra el bucle volviendo siempre a lblInicio
+    codigoIntermedio += " LOOP LBL" + (lblInicio + 1) + "\n";
+    break;
+}
             // Caso: Macros o llamadas a funciones específicas
             else if (sentencia.startsWith("ADELANTE")) {
                 codigoIntermedio += "   MACRO_ADELANTE " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
@@ -2134,6 +2187,57 @@ public class Compilador extends javax.swing.JFrame {
     } // Fin de for de bloques de código
 }
     
+  private String optimizarCodigoIntermedio(String codigo) {
+    StringBuilder optimizado = new StringBuilder();
+    String[] lineas = codigo.split("\\n");
+
+    // Eliminación de líneas vacías y redundancias simples
+    String lineaAnterior = "";
+    for (String linea : lineas) {
+        linea = linea.trim();
+
+        // Eliminar líneas vacías
+        if (linea.isEmpty()) continue;
+
+        // Eliminar asignaciones redundantes (ej: x = x)
+        if (linea.matches("\\s*[a-zA-Z_][a-zA-Z_0-9]* = \\1.*")) continue;
+
+        // Eliminar saltos a la siguiente línea (goto misma etiqueta)
+        if (lineaAnterior.startsWith("goto") && linea.startsWith("LBL") &&
+            lineaAnterior.split(" ")[1].equals(linea.replace(":", ""))) {
+            continue;
+        }
+
+        optimizado.append(linea).append("\n");
+        lineaAnterior = linea;
+    }
+
+    String resultado = optimizado.toString();
+
+    // Eliminación de etiquetas no utilizadas
+    Set<String> etiquetasUsadas = new HashSet<>();
+    Matcher matcher = Pattern.compile("goto (LBL\\d+)").matcher(resultado);
+    while (matcher.find()) {
+        etiquetasUsadas.add(matcher.group(1));
+    }
+    matcher = Pattern.compile("if .* goto (LBL\\d+)").matcher(resultado);
+    while (matcher.find()) {
+        etiquetasUsadas.add(matcher.group(1));
+    }
+
+    StringBuilder finalOptimizado = new StringBuilder();
+    lineas = resultado.split("\\n");
+    for (String linea : lineas) {
+        if (linea.startsWith("LBL")) {
+            String etiqueta = linea.replace(":", "");
+            if (!etiquetasUsadas.contains(etiqueta)) continue; // eliminar etiquetas no usadas
+        }
+        finalOptimizado.append(linea).append("\n");
+    }
+    System.out.println("Codigo Optimizado Hello: " + finalOptimizado.toString());
+    codigoOptimizado = finalOptimizado.toString();
+    return finalOptimizado.toString();
+}
     private void cambioColor() {
         /* Limpiar el arreglo de colores */
         textocolor.clear();
@@ -2324,6 +2428,7 @@ public class Compilador extends javax.swing.JFrame {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;

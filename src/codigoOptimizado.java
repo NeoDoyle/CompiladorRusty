@@ -1,16 +1,17 @@
 import javax.swing.JTextArea;
 
 
-public class codigoIntermedio extends javax.swing.JDialog {
+
+public class codigoOptimizado extends javax.swing.JDialog {
     
-    public codigoIntermedio(java.awt.Frame parent, boolean modal) {
+    public codigoOptimizado(java.awt.Frame parent, boolean modal) {
         super(parent,"Codigo Intermedio", modal);
         initComponents();
         setLocationRelativeTo(parent); 
     }
     
     public void setCodigo(String codigo){
-        txtCodInt.setText(codigo);
+        txtCodOp.setText(codigo);
     }
     
     @SuppressWarnings("unchecked")
@@ -20,7 +21,7 @@ public class codigoIntermedio extends javax.swing.JDialog {
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        txtCodInt = new javax.swing.JTextArea();
+        txtCodOp = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -28,7 +29,7 @@ public class codigoIntermedio extends javax.swing.JDialog {
 
         jLabel1.setFont(new java.awt.Font("Arial Black", 0, 20)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 153, 51));
-        jLabel1.setText("CODIGO INTERMEDIO");
+        jLabel1.setText("CODIGO OPTIMIZADO");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -47,13 +48,13 @@ public class codigoIntermedio extends javax.swing.JDialog {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        txtCodInt.setEditable(false);
-        txtCodInt.setBackground(new java.awt.Color(204, 204, 204));
-        txtCodInt.setColumns(20);
-        txtCodInt.setFont(new java.awt.Font("Courier New", 1, 14)); // NOI18N
-        txtCodInt.setForeground(new java.awt.Color(51, 51, 51));
-        txtCodInt.setRows(5);
-        jScrollPane3.setViewportView(txtCodInt);
+        txtCodOp.setEditable(false);
+        txtCodOp.setBackground(new java.awt.Color(204, 204, 204));
+        txtCodOp.setColumns(20);
+        txtCodOp.setFont(new java.awt.Font("Courier New", 1, 14)); // NOI18N
+        txtCodOp.setForeground(new java.awt.Color(51, 51, 51));
+        txtCodOp.setRows(5);
+        jScrollPane3.setViewportView(txtCodOp);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -62,8 +63,7 @@ public class codigoIntermedio extends javax.swing.JDialog {
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 645, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 645, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -143,6 +143,6 @@ public class codigoIntermedio extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JTextArea txtCodInt;
+    private javax.swing.JTextArea txtCodOp;
     // End of variables declaration//GEN-END:variables
 }
