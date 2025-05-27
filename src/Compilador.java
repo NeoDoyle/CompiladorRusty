@@ -94,6 +94,7 @@ public class Compilador extends javax.swing.JFrame {
     String data,code,proc;
     private codigoIntermedio pantallaCodIn;
     private codigoOptimizado pantallaCodOp;
+    private codigoASM pantallaCodASM;
 
     /**
      * Creates new form Compilador
@@ -115,6 +116,7 @@ public class Compilador extends javax.swing.JFrame {
         tablaT = new tablaTokens(this, true);
         pantallaCodIn = new codigoIntermedio(this,true);
         pantallaCodOp = new codigoOptimizado(this,true);
+        pantallaCodASM = new codigoASM(this, true);
         setTitle(titulo);
         directorio = new Directory(this, areaCodigo, titulo, ".ware");
         addWindowListener(new WindowAdapter() {// Método para preguntar al cerrar, si no se ha guardado
@@ -592,28 +594,12 @@ public class Compilador extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void CodigoASMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CodigoASMActionPerformed
-        if (!estadoCompilacion) {
-            JOptionPane.showMessageDialog(null, "Primero debes compilar el código antes de generar ASM.",
-                    "Advertencia", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Generar ASM
-        generarCodigoASM(codigoOptimizado);
-
-        // Guardar el archivo ASM
-        try {
-            File archivoASM = new File("codigoGenerado.asm");
-            BufferedWriter writer = new BufferedWriter(new FileWriter(archivoASM));
-            writer.write(";" + titulo + " - Código ASM Generado\n\n");
-            writer.write(asmGenerado); // Variable global para almacenar el ASM generado
-            writer.close();
-
-            JOptionPane.showMessageDialog(null, "Código ASM generado correctamente:\n" + archivoASM.getAbsolutePath(),
-                    "ASM Generado", JOptionPane.INFORMATION_MESSAGE);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error al guardar el archivo ASM: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+        if (estadoCompilacion) {
+            pantallaCodASM.setCodigo(asmGenerado);
+            pantallaCodASM.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(null, "No se ha compilado el programa, no se puede mostrar esto...",
+                    "Error en la generacion de codigo", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_CodigoASMActionPerformed
 
@@ -664,8 +650,8 @@ public class Compilador extends javax.swing.JFrame {
         }
 
         asmGenerado = asm.toString();
+        pantallaCodASM.setCodigo(asmGenerado);
         System.out.println("CÓDIGO ASM GENERADO:\n" + asmGenerado);
-        // pantallaCodASM.setCodigo(asm.toString()); // Si quieres mostrarlo visualmente
     }
 
     private void compile() {
