@@ -86,6 +86,9 @@ public class Compilador extends javax.swing.JFrame {
     
     //Codigo optimizado
     String codigoOptimizado;
+
+    // Variable global para almacenar el ASM generado
+    String asmGenerado = "";
     
      //PARA el ASM
     String data,code,proc;
@@ -207,6 +210,7 @@ public class Compilador extends javax.swing.JFrame {
         btnCompilar = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        CodigoASM = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -459,6 +463,15 @@ public class Compilador extends javax.swing.JFrame {
             }
         });
 
+        CodigoASM.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        CodigoASM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/9928199 (4).png"))); // NOI18N
+        CodigoASM.setText("Codigo ASM");
+        CodigoASM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CodigoASMActionPerformed(evt);
+            }
+        });
+
         jMenuBar1.setBackground(java.awt.SystemColor.textHighlight);
         jMenuBar1.setForeground(new java.awt.Color(255, 153, 0));
         setJMenuBar(jMenuBar1);
@@ -479,7 +492,9 @@ public class Compilador extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(14, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(CodigoASM, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(8, Short.MAX_VALUE))
                     .addComponent(jScrollPane2)))
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
@@ -487,17 +502,23 @@ public class Compilador extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(13, 13, 13))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(jButton4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton5))
-                    .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(13, 13, 13))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(jButton4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jButton5))
+                            .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(27, 27, 27)
+                        .addComponent(CodigoASM)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -570,6 +591,32 @@ public class Compilador extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton5ActionPerformed
 
+    private void CodigoASMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CodigoASMActionPerformed
+        if (!estadoCompilacion) {
+            JOptionPane.showMessageDialog(null, "Primero debes compilar el código antes de generar ASM.",
+                    "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Generar ASM
+        generarCodigoASM(codigoOptimizado);
+
+        // Guardar el archivo ASM
+        try {
+            File archivoASM = new File("codigoGenerado.asm");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(archivoASM));
+            writer.write(";" + titulo + " - Código ASM Generado\n\n");
+            writer.write(asmGenerado); // Variable global para almacenar el ASM generado
+            writer.close();
+
+            JOptionPane.showMessageDialog(null, "Código ASM generado correctamente:\n" + archivoASM.getAbsolutePath(),
+                    "ASM Generado", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error al guardar el archivo ASM: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_CodigoASMActionPerformed
+
     // Método para generar código ASM a partir del código optimizado
     private void generarCodigoASM(String codigoOptimizado) {
         StringBuilder asm = new StringBuilder();
@@ -616,7 +663,8 @@ public class Compilador extends javax.swing.JFrame {
             }
         }
 
-        System.out.println("CÓDIGO ASM GENERADO:\n" + asm.toString());
+        asmGenerado = asm.toString();
+        System.out.println("CÓDIGO ASM GENERADO:\n" + asmGenerado);
         // pantallaCodASM.setCodigo(asm.toString()); // Si quieres mostrarlo visualmente
     }
 
@@ -2529,6 +2577,7 @@ private String optimizarCodigoIntermedio(String codigo) {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton CodigoASM;
     private javax.swing.JTextPane areaCodigo;
     private javax.swing.JButton btnAbrir;
     private javax.swing.JButton btnCompilar;

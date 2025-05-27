@@ -3,11 +3,10 @@ CLASE busqueda{
 CONF COLOR colorVacio = #70FF00;
 CONF CAD fin = 'Finalización de la revision';
 CONF CAD cajaVacia = 'Caja vacia';
-CONF CAD cajaLlena = 'Producto tomado';
+CONF CAD cajaLlena = 'Caja llena';
 CONF FREC alarm = 20;
 CONF MINI x = 1;
 VECT CAD buscados = ['Zucaritas','Pan Bimbo','Canelitas'];
-VECT CAD estado [3];
 
 
 DEF tomarHay(){
@@ -26,6 +25,8 @@ DEF tomarHay(){
 DEF recorridoZucaritas(){
 REPETIR(3){
    SI(VERADELANTE()==VERDADERO){
+CONF CAD cajaLlena2 = 'Producto tomado';
+	buscados[x] = 'bueno';
       ADELANTE(4,2);
    }SINO{
       PARAR();
@@ -37,6 +38,7 @@ REPETIR(3){
 }
 
 DEF recorridoPan(){
+CONF CAD cajaLlena3 = 'Producto tomado';
  REPETIR(2){
    SI(VERDERECHA()==VERDADERO){
       IZQUIERDA(2,2);
