@@ -570,6 +570,56 @@ public class Compilador extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton5ActionPerformed
 
+    // Método para generar código ASM a partir del código optimizado
+    private void generarCodigoASM(String codigoOptimizado) {
+        StringBuilder asm = new StringBuilder();
+        String[] lineas = codigoOptimizado.split("\\n");
+
+        for (String linea : lineas) {
+            linea = linea.trim();
+
+            if (linea.startsWith("INICIO:")) {
+                asm.append("; Inicio del programa\n");
+            } else if (linea.matches("[a-zA-Z_][a-zA-Z0-9_]* = .*")) {
+                String[] partes = linea.split(" = ");
+                asm.append("MOV ").append(partes[0]).append(", ").append(partes[1]).append("\n");
+            } else if (linea.startsWith("Call ")) {
+                String func = linea.substring(5);
+                asm.append("CALL ").append(func).append("\n");
+            } else if (linea.startsWith("if ")) {
+                Pattern p = Pattern.compile("if\\s+(.+?)\\s+==\\s+(.+?)\\s+goto\\s+(LBL\\d+)");
+                Matcher m = p.matcher(linea);
+                if (m.find()) {
+                    String op1 = m.group(1).trim();
+                    String op2 = m.group(2).trim();
+                    String etiqueta = m.group(3).trim();
+                    asm.append("CMP ").append(op1).append(", ").append(op2).append("\n");
+                    asm.append("JE ").append(etiqueta).append("\n");
+                } else {
+                    int idxGoto = linea.indexOf("goto");
+                    String cond = linea.substring(3, idxGoto).trim();
+                    String label = linea.substring(idxGoto + 4).trim();
+                    asm.append("CMP ").append(cond).append(", VERDADERO").append("\n");
+                    asm.append("JE ").append(label).append("\n");
+                }
+            } else if (linea.startsWith("goto ")) {
+                asm.append("JMP ").append(linea.substring(5)).append("\n");
+            } else if (linea.matches("LBL\\d+:")) {
+                String etiqueta = linea.replace(":", "");
+                asm.append(etiqueta).append(":\n");
+            } else if (linea.startsWith("MACRO_")) {
+                asm.append("CALL ").append(linea.replace("MACRO_", "")).append("\n");
+            } else if (linea.startsWith("FIN") || linea.startsWith("FIN PROC")) {
+                asm.append("; Fin del bloque\n");
+            } else {
+                asm.append("; ").append(linea).append("\n");
+            }
+        }
+
+        System.out.println("CÓDIGO ASM GENERADO:\n" + asm.toString());
+        // pantallaCodASM.setCodigo(asm.toString()); // Si quieres mostrarlo visualmente
+    }
+
     private void compile() {
         limpiarAreaCodigo();
         analisisLexico();
@@ -587,6 +637,7 @@ public class Compilador extends javax.swing.JFrame {
             ArrayList<String> codigoDividido = Functions.splitCodeInCodeBlocks(tokens, "{", "}", ";").getBlocksOfCodeInOrderOfExec();
             generarCodigoIntermedio(codigoDividido,1);
             optimizarCodigoIntermedio(codigoIntermedio);
+            generarCodigoASM(codigoOptimizado);
         }else{
             JOptionPane.showMessageDialog(null, "No se puede generar el codigo intermedio porque el programa contiene errores...",
                     "Error en la generacion de codigo", JOptionPane.ERROR_MESSAGE);
@@ -624,6 +675,13 @@ public class Compilador extends javax.swing.JFrame {
                 Token token = lexema.yylex();
                 if (token == null) {
                     break;
+                }
+                // Corregir cadenas que comienzan con ' pero no terminan con '
+                if (token.getLexeme().startsWith("'") && !token.getLexeme().endsWith("'")) {
+                    String lex = token.getLexeme();
+                    if (!lex.substring(1).contains("'")) {
+                        token = new Token(token.getLexicalComp(), lex + "'", token.getLine(), token.getColumn());
+                    }
                 }
                 tokens.add(token);
             }
@@ -1969,10 +2027,14 @@ public class Compilador extends javax.swing.JFrame {
         
     }//FIN SEMANTICO
     
- private int cLBL = 1, ccc = 0;
+private int cLBL = 1, ccc = 0;
 
- private void generarCodigoIntermedio(ArrayList<String> codigoDiv, int control) {
+private void generarCodigoIntermedio(ArrayList<String> codigoDiv, int control) {
     int temp = 0;
+    if (control == 0) {
+        codigoIntermedio = "";
+    }
+    java.util.Set<String> etiquetasGeneradas = new java.util.HashSet<>();
     // Recorre cada bloque de código delimitado por { y }
     for (int x = 0; x < codigoDiv.size(); x++) {
         String bloquesCod = codigoDiv.get(x);
@@ -2001,7 +2063,14 @@ public class Compilador extends javax.swing.JFrame {
                             codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4])) + "\n";
                             break;
                         case "CAD":
-                            codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4]), sentencia.lastIndexOf("'")) + "\n";
+                            int ini = sentencia.indexOf("'", sentencia.indexOf(s[4]));
+                            int fin = sentencia.lastIndexOf("'");
+                            if (ini != -1 && fin != -1 && fin > ini) {
+                                String cadena = sentencia.substring(ini, fin + 1);
+                                codigoIntermedio += "   " + s[2] + " = " + cadena + "\n";
+                            } else {
+                                codigoIntermedio += "   " + s[2] + " = ''\n";
+                            }
                             break;
                         default:
                             codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4])) + "\n";
@@ -2090,73 +2159,113 @@ public class Compilador extends javax.swing.JFrame {
             }
             // Caso: Estructuras de control condicional (SI/SINO)
             else if (sentencia.startsWith("SI") || sentencia.startsWith("SINO")) {
-                String local = "LBL" + (cLBL++) + ":\n";
+                String etiqueta;
+                do {
+                    etiqueta = "LBL" + cLBL++;
+                } while (etiquetasGeneradas.contains(etiqueta));
+                etiquetasGeneradas.add(etiqueta);
+                String local = etiqueta + ":\n";
                 if (sentencia.startsWith("SI ")) {
+                    // Genera dos nuevas etiquetas para los saltos
+                    String etiquetaTrue, etiquetaFalse;
+                    do {
+                        etiquetaTrue = "LBL" + cLBL++;
+                    } while (etiquetasGeneradas.contains(etiquetaTrue));
+                    etiquetasGeneradas.add(etiquetaTrue);
+                    do {
+                        etiquetaFalse = "LBL" + cLBL++;
+                    } while (etiquetasGeneradas.contains(etiquetaFalse));
+                    etiquetasGeneradas.add(etiquetaFalse);
                     local += "    if " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")"))
-                            + " goto LBL" + (cLBL) + "\n"
-                            + "   goto LBL" + (cLBL + 1) + "\n";
+                            + " goto " + etiquetaTrue + "\n"
+                            + "   goto " + etiquetaFalse + "\n";
+                    codigoIntermedio += local + etiquetaTrue + ":\n";
+                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                    x = pos[1];
+                    // Añade etiquetaFalse después del bloque SI
+                    codigoIntermedio += etiquetaFalse + ":\n";
+                    break;
                 } else { // SINO
-                    local = " goto LBL" + (cLBL + 1) + "\n";
+                    // SINO sólo hace goto a la siguiente etiqueta
+                    String etiquetaSino;
+                    do {
+                        etiquetaSino = "LBL" + cLBL++;
+                    } while (etiquetasGeneradas.contains(etiquetaSino));
+                    etiquetasGeneradas.add(etiquetaSino);
+                    local = " goto " + etiquetaSino + "\n";
+                    codigoIntermedio += local + etiquetaSino + ":\n";
+                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
+                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                    x = pos[1];
+                    // Añade otra etiqueta para el final del SINO
+                    String etiquetaFinSino;
+                    do {
+                        etiquetaFinSino = "LBL" + cLBL++;
+                    } while (etiquetasGeneradas.contains(etiquetaFinSino));
+                    etiquetasGeneradas.add(etiquetaFinSino);
+                    codigoIntermedio += etiquetaFinSino + ":\n";
+                    break;
                 }
-                codigoIntermedio += local + "LBL" + (cLBL) + ":\n";
-                int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
-                x = pos[1];
-                if (sentencia.startsWith("SINO")) {
-                    codigoIntermedio += "LBL" + (++cLBL) + ":\n";
-                }
-                break;
             }
             // Caso: Bucle MIENTRAS
             else if (sentencia.startsWith("MIENTRAS")) {
-                int sp;
-                codigoIntermedio += "LBL" + cLBL + ":\n";
-                sp = cLBL;
+                String etiquetaInicio, etiquetaCond, etiquetaFin;
+                do {
+                    etiquetaInicio = "LBL" + cLBL++;
+                } while (etiquetasGeneradas.contains(etiquetaInicio));
+                etiquetasGeneradas.add(etiquetaInicio);
+                do {
+                    etiquetaCond = "LBL" + cLBL++;
+                } while (etiquetasGeneradas.contains(etiquetaCond));
+                etiquetasGeneradas.add(etiquetaCond);
+                do {
+                    etiquetaFin = "LBL" + cLBL++;
+                } while (etiquetasGeneradas.contains(etiquetaFin));
+                etiquetasGeneradas.add(etiquetaFin);
+                codigoIntermedio += etiquetaInicio + ":\n";
                 codigoIntermedio += " if " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")"))
-                        + " goto LBL" + (++cLBL) + "\n"
-                        + "   goto LBL" + (cLBL + 1) + "\n"
-                        + "LBL" + cLBL + ":\n";
+                        + " goto " + etiquetaCond + "\n"
+                        + "   goto " + etiquetaFin + "\n"
+                        + etiquetaCond + ":\n";
                 int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
                         codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
                 generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
                 x = pos[1];
-                codigoIntermedio += " goto LBL" + sp + "\n" + "LBL" + (++cLBL) + ":\n";
+                codigoIntermedio += " goto " + etiquetaInicio + "\n" + etiquetaFin + ":\n";
                 break;
             }
             // Caso: Bucle REPETIR
-else if (sentencia.startsWith("REPETIR")) {
-    // 1) Reserva el número de etiqueta para el bucle
-    int lblInicio = ++cLBL;
-
-    // 2) Emite la etiqueta de entrada
-    codigoIntermedio += "LBL" + lblInicio + ":\n";
-
-    // 3) Asegura que cualquier nueva etiqueta comience en lblInicio+1
-    cLBL = lblInicio + 1;
-
-    // 4) Emite la instrucción REPETIR , N
-    String veces = sentencia.substring(
-        sentencia.indexOf("(") + 1,
-        sentencia.lastIndexOf(")")
-    );
-    codigoIntermedio += " REPETIR , " + veces + "\n";
-
-    // 5) Genera el cuerpo recursivamente
-    int[] pos = CodeBlock.getPositionOfBothMarkers(
-        codigoDiv,
-        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1)
-    );
-    generarCodigoIntermedio(
-        new ArrayList<>(codigoDiv.subList(pos[0], pos[1])),
-        control
-    );
-    x = pos[1];
-
-    // 6) Cierra el bucle volviendo siempre a lblInicio
-    codigoIntermedio += " LOOP LBL" + (lblInicio + 1) + "\n";
-    break;
-}
+            else if (sentencia.startsWith("REPETIR")) {
+                String etiquetaInicio, etiquetaFin;
+                do {
+                    etiquetaInicio = "LBL" + cLBL++;
+                } while (etiquetasGeneradas.contains(etiquetaInicio));
+                etiquetasGeneradas.add(etiquetaInicio);
+                do {
+                    etiquetaFin = "LBL" + cLBL++;
+                } while (etiquetasGeneradas.contains(etiquetaFin));
+                etiquetasGeneradas.add(etiquetaFin);
+                codigoIntermedio += etiquetaInicio + ":\n";
+                String veces = sentencia.substring(
+                    sentencia.indexOf("(") + 1,
+                    sentencia.lastIndexOf(")")
+                );
+                codigoIntermedio += " REPETIR , " + veces + "\n";
+                int[] pos = CodeBlock.getPositionOfBothMarkers(
+                    codigoDiv,
+                    codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1)
+                );
+                generarCodigoIntermedio(
+                    new ArrayList<>(codigoDiv.subList(pos[0], pos[1])),
+                    control
+                );
+                x = pos[1];
+                codigoIntermedio += " LOOP " + etiquetaFin + "\n";
+                break;
+            }
             // Caso: Macros o llamadas a funciones específicas
             else if (sentencia.startsWith("ADELANTE")) {
                 codigoIntermedio += "   MACRO_ADELANTE " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
@@ -2187,7 +2296,7 @@ else if (sentencia.startsWith("REPETIR")) {
     } // Fin de for de bloques de código
 }
     
-  private String optimizarCodigoIntermedio(String codigo) {
+private String optimizarCodigoIntermedio(String codigo) {
     StringBuilder optimizado = new StringBuilder();
     String[] lineas = codigo.split("\\n");
 
@@ -2195,14 +2304,12 @@ else if (sentencia.startsWith("REPETIR")) {
     String lineaAnterior = "";
     for (String linea : lineas) {
         linea = linea.trim();
-
-        // Eliminar líneas vacías
         if (linea.isEmpty()) continue;
 
         // Eliminar asignaciones redundantes (ej: x = x)
-        if (linea.matches("\\s*[a-zA-Z_][a-zA-Z_0-9]* = \\1.*")) continue;
+        if (linea.matches("\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*\\1\\s*")) continue;
 
-        // Eliminar saltos a la siguiente línea (goto misma etiqueta)
+        // Eliminar saltos redundantes a la siguiente línea (goto misma etiqueta)
         if (lineaAnterior.startsWith("goto") && linea.startsWith("LBL") &&
             lineaAnterior.split(" ")[1].equals(linea.replace(":", ""))) {
             continue;
@@ -2214,27 +2321,29 @@ else if (sentencia.startsWith("REPETIR")) {
 
     String resultado = optimizado.toString();
 
-    // Eliminación de etiquetas no utilizadas
+    // Recolectar etiquetas utilizadas por 'goto' e 'if'
     Set<String> etiquetasUsadas = new HashSet<>();
-    Matcher matcher = Pattern.compile("goto (LBL\\d+)").matcher(resultado);
+    Matcher matcher = Pattern.compile("\\bgoto (LBL\\d+)\\b").matcher(resultado);
     while (matcher.find()) {
         etiquetasUsadas.add(matcher.group(1));
     }
-    matcher = Pattern.compile("if .* goto (LBL\\d+)").matcher(resultado);
+    matcher = Pattern.compile("\\bif .*? goto (LBL\\d+)\\b").matcher(resultado);
     while (matcher.find()) {
         etiquetasUsadas.add(matcher.group(1));
     }
 
+    // Eliminar etiquetas no utilizadas
     StringBuilder finalOptimizado = new StringBuilder();
     lineas = resultado.split("\\n");
     for (String linea : lineas) {
         if (linea.startsWith("LBL")) {
-            String etiqueta = linea.replace(":", "");
-            if (!etiquetasUsadas.contains(etiqueta)) continue; // eliminar etiquetas no usadas
+            String etiqueta = linea.replace(":", "").trim();
+            if (!etiquetasUsadas.contains(etiqueta)) continue;
         }
         finalOptimizado.append(linea).append("\n");
     }
-    System.out.println("Codigo Optimizado Hello: " + finalOptimizado.toString());
+
+    System.out.println("CÓDIGO OPTIMIZADO:\n" + finalOptimizado);
     codigoOptimizado = finalOptimizado.toString();
     return finalOptimizado.toString();
 }
@@ -2338,6 +2447,8 @@ else if (sentencia.startsWith("REPETIR")) {
 
     private void limpiarAreaCodigo() {
         // Functions.clearDataInTable(tablaSimbolos);
+        codigoIntermedio = "";
+        codigoOptimizado = "";
         consola.setText("");
         tokens.clear();
         errores.clear();
