@@ -4,18 +4,18 @@ CONF COLOR colorVacio = #70FF00;
 CONF CAD fin = 'Finalización de la revision';
 CONF CAD cajaVacia = 'Caja vacia';
 CONF CAD cajaLlena = 'Caja llena';
-CONF FREC alarm = 20;
+CONF FREC alarm = 50;
 CONF MINI x = 1;
 VECT CAD buscados = ['Zucaritas','Pan Bimbo','Canelitas'];
 
 
 DEF tomarHay(){
-     SI(REVISAR(#70FF00,12)==FALSO){
+   SI(REVISAR(#70FF00,12)==FALSO){
       TOMAR();
       IMPR('C',LCD);
    }SINO{
       IMPR('t',LCD);
-      ALARMA(alarm);
+	
    }
 
 }
@@ -23,55 +23,26 @@ DEF tomarHay(){
 
 //DECLARACION METODOS
 DEF recorridoZucaritas(){
-REPETIR(3){
+REPETIR(7){
+	DERECHA(2,1);
    SI(VERADELANTE()==VERDADERO){
-CONF CAD cajaLlena2 = 'Producto tomado';
-	buscados[x] = 'bueno';
-      ADELANTE(4,2);
+	
+      ADELANTE(6,2);
+	ALARMA(alarm);
    }SINO{
-      PARAR();
-      IMPR('obstruccion',LCD);
+	DERECHA(3,1);
+	CONF CAD obstr = 'obstruccion';
+      IMPR(obstr,LCD);
 
    }
  }
 
 }
 
-DEF recorridoPan(){
-CONF CAD cajaLlena3 = 'Producto tomado';
- REPETIR(2){
-   SI(VERDERECHA()==VERDADERO){
-      IZQUIERDA(2,2);
-   }SINO{
-      PARAR();
-      IMPR('obstruccion',LCD);
 
-   }
- }
-
-}
-
-DEF recorridoCanelitas(){
- REPETIR(4){
-   SI(VERDERECHA()==VERDADERO){
-      DERECHA(2,2);
-   }SINO{
-      PARAR();
-      IMPR('obstruccion',LCD);
-
-   }
- }
-
-}
 
 DEF principal(){
    recorridoZucaritas();
-   tomarHay();  
-   recorridoPan();
-   tomarHay();  
-   recorridoCanelitas();
-   tomarHay();   
-
  }
 
 }//CLAASE

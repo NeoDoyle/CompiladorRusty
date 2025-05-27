@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -42,6 +43,22 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 
+enum TipoInstr {
+    INICIO, CONFIG, VECT, DEF_PRINCIPAL, DEF_PROC,
+    ASIGN, CALL, CONDICION, CICLO_WHILE, CICLO_REPEAT,
+    MACRO
+}
+
+class InstruccionIntermedia {
+    private TipoInstr tipo;
+    private List<String> args;
+    public InstruccionIntermedia(TipoInstr tipo, String... args) {
+        this.tipo = tipo;
+        this.args = Arrays.asList(args);
+    }
+    public TipoInstr getTipo() { return tipo; }
+    public List<String> getArgs() { return args; }
+}
 
 public class Compilador extends javax.swing.JFrame {
     private String titulo;
@@ -81,9 +98,13 @@ public class Compilador extends javax.swing.JFrame {
     private ArrayList<Production> expRel;
     
     //Codigo intermedio
-    String codigoIntermedio;
+
     String cuidameloTantito;
-    
+   private String codigoIntermedio = "";
+    private String data = "";
+    private String proc = "";
+    private String code = "";
+    private int lblCount = 0;
     //Codigo optimizado
     String codigoOptimizado;
 
@@ -91,7 +112,7 @@ public class Compilador extends javax.swing.JFrame {
     String asmGenerado = "";
     
      //PARA el ASM
-    String data,code,proc;
+ 
     private codigoIntermedio pantallaCodIn;
     private codigoOptimizado pantallaCodOp;
     private codigoASM pantallaCodASM;
@@ -175,6 +196,8 @@ public class Compilador extends javax.swing.JFrame {
         proc="";
         estadoCompilacion = false;
         //tablaSimbolos.setVisible(false);
+        panelButtonCompilerExecute2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Ventanas de Código", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 12), new java.awt.Color(241, 170, 17))); // NOI18N
+
     }
 
     /**
@@ -210,6 +233,8 @@ public class Compilador extends javax.swing.JFrame {
         btnGuardar = new javax.swing.JButton();
         btnGuardarC = new javax.swing.JButton();
         btnCompilar = new javax.swing.JButton();
+        btnEjecutar = new javax.swing.JButton();
+        panelButtonCompilerExecute2 = new javax.swing.JPanel();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         CodigoASM = new javax.swing.JButton();
@@ -260,7 +285,7 @@ public class Compilador extends javax.swing.JFrame {
                 .addGroup(panelButtonCompilerExecuteLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(0, 2, Short.MAX_VALUE))
+                .addGap(0, 6, Short.MAX_VALUE))
         );
 
         jScrollPane2.setBackground(new java.awt.Color(204, 255, 255));
@@ -418,6 +443,16 @@ public class Compilador extends javax.swing.JFrame {
             }
         });
 
+        btnEjecutar.setBackground(new java.awt.Color(0, 153, 153));
+        btnEjecutar.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnEjecutar.setForeground(new java.awt.Color(255, 255, 255));
+        btnEjecutar.setText("Ejecutar");
+        btnEjecutar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEjecutarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -433,7 +468,9 @@ public class Compilador extends javax.swing.JFrame {
                 .addComponent(btnGuardarC, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnCompilar)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(btnEjecutar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(12, 12, 12))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -443,9 +480,12 @@ public class Compilador extends javax.swing.JFrame {
                     .addComponent(btnAbrir)
                     .addComponent(btnGuardar)
                     .addComponent(btnGuardarC)
-                    .addComponent(btnCompilar))
-                .addGap(0, 1, Short.MAX_VALUE))
+                    .addComponent(btnCompilar)
+                    .addComponent(btnEjecutar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 12, Short.MAX_VALUE))
         );
+
+        panelButtonCompilerExecute2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Estructuras de la Compilación", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 12), new java.awt.Color(241, 170, 17))); // NOI18N
 
         jButton4.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/9928199 (4).png"))); // NOI18N
@@ -474,6 +514,29 @@ public class Compilador extends javax.swing.JFrame {
             }
         });
 
+        javax.swing.GroupLayout panelButtonCompilerExecute2Layout = new javax.swing.GroupLayout(panelButtonCompilerExecute2);
+        panelButtonCompilerExecute2.setLayout(panelButtonCompilerExecute2Layout);
+        panelButtonCompilerExecute2Layout.setHorizontalGroup(
+            panelButtonCompilerExecute2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelButtonCompilerExecute2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButton4)
+                .addGap(12, 12, 12)
+                .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, 169, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(CodigoASM, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        panelButtonCompilerExecute2Layout.setVerticalGroup(
+            panelButtonCompilerExecute2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelButtonCompilerExecute2Layout.createSequentialGroup()
+                .addGap(0, 6, Short.MAX_VALUE)
+                .addGroup(panelButtonCompilerExecute2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton4)
+                    .addComponent(jButton5)
+                    .addComponent(CodigoASM)))
+        );
+
         jMenuBar1.setBackground(java.awt.SystemColor.textHighlight);
         jMenuBar1.setForeground(new java.awt.Color(255, 153, 0));
         setJMenuBar(jMenuBar1);
@@ -482,53 +545,40 @@ public class Compilador extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(CodigoASM, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(8, Short.MAX_VALUE))
-                    .addComponent(jScrollPane2)))
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 745, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(panelButtonCompilerExecute2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(13, 13, 13))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(jButton4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jButton5))
-                            .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addComponent(CodigoASM)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panelButtonCompilerExecute2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(31, 31, 31)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         panelButtonCompilerExecute.getAccessibleContext().setAccessibleName("");
         jPanel3.getAccessibleContext().setAccessibleName("");
+        panelButtonCompilerExecute2.getAccessibleContext().setAccessibleName("Ventanas de Código");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -595,7 +645,6 @@ public class Compilador extends javax.swing.JFrame {
 
     private void CodigoASMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CodigoASMActionPerformed
         if (estadoCompilacion) {
-            pantallaCodASM.setCodigo(asmGenerado);
             pantallaCodASM.setVisible(true);
         } else {
             JOptionPane.showMessageDialog(null, "No se ha compilado el programa, no se puede mostrar esto...",
@@ -603,58 +652,26 @@ public class Compilador extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_CodigoASMActionPerformed
 
-    // Método para generar código ASM a partir del código optimizado
-    private void generarCodigoASM(String codigoOptimizado) {
-        StringBuilder asm = new StringBuilder();
-        String[] lineas = codigoOptimizado.split("\\n");
-
-        for (String linea : lineas) {
-            linea = linea.trim();
-
-            if (linea.startsWith("INICIO:")) {
-                asm.append("; Inicio del programa\n");
-            } else if (linea.matches("[a-zA-Z_][a-zA-Z0-9_]* = .*")) {
-                String[] partes = linea.split(" = ");
-                asm.append("MOV ").append(partes[0]).append(", ").append(partes[1]).append("\n");
-            } else if (linea.startsWith("Call ")) {
-                String func = linea.substring(5);
-                asm.append("CALL ").append(func).append("\n");
-            } else if (linea.startsWith("if ")) {
-                Pattern p = Pattern.compile("if\\s+(.+?)\\s+==\\s+(.+?)\\s+goto\\s+(LBL\\d+)");
-                Matcher m = p.matcher(linea);
-                if (m.find()) {
-                    String op1 = m.group(1).trim();
-                    String op2 = m.group(2).trim();
-                    String etiqueta = m.group(3).trim();
-                    asm.append("CMP ").append(op1).append(", ").append(op2).append("\n");
-                    asm.append("JE ").append(etiqueta).append("\n");
-                } else {
-                    int idxGoto = linea.indexOf("goto");
-                    String cond = linea.substring(3, idxGoto).trim();
-                    String label = linea.substring(idxGoto + 4).trim();
-                    asm.append("CMP ").append(cond).append(", VERDADERO").append("\n");
-                    asm.append("JE ").append(label).append("\n");
-                }
-            } else if (linea.startsWith("goto ")) {
-                asm.append("JMP ").append(linea.substring(5)).append("\n");
-            } else if (linea.matches("LBL\\d+:")) {
-                String etiqueta = linea.replace(":", "");
-                asm.append(etiqueta).append(":\n");
-            } else if (linea.startsWith("MACRO_")) {
-                asm.append("CALL ").append(linea.replace("MACRO_", "")).append("\n");
-            } else if (linea.startsWith("FIN") || linea.startsWith("FIN PROC")) {
-                asm.append("; Fin del bloque\n");
-            } else {
-                asm.append("; ").append(linea).append("\n");
-            }
+    private void btnEjecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEjecutarActionPerformed
+        //Para ejecutar la C
+        String tit = this.getTitle();
+        tit = tit.substring(0, tit.indexOf("."));
+        String rutaASM = "C:\\WareLangCompiler\\"+tit +".asm";
+        File file = new File(rutaASM);
+        Desktop d = Desktop.getDesktop();
+        try {
+            d.open(file);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
         }
+    }//GEN-LAST:event_btnEjecutarActionPerformed
 
-        asmGenerado = asm.toString();
-        pantallaCodASM.setCodigo(asmGenerado);
-        System.out.println("CÓDIGO ASM GENERADO:\n" + asmGenerado);
-    }
+
+
+
 
     private void compile() {
+        
         limpiarAreaCodigo();
         analisisLexico();
         analisisSintactico();
@@ -662,16 +679,16 @@ public class Compilador extends javax.swing.JFrame {
         TablaTokens();
         tablasSimbolos();
         imprimirConsola();
-        
+
         estadoCompilacion = true;
         //rest
         
          //Se genera el codigo intermedio aqui en caliente.
         if(errores.isEmpty()){
             ArrayList<String> codigoDividido = Functions.splitCodeInCodeBlocks(tokens, "{", "}", ";").getBlocksOfCodeInOrderOfExec();
-            generarCodigoIntermedio(codigoDividido,1);
-            optimizarCodigoIntermedio(codigoIntermedio);
-            generarCodigoASM(codigoOptimizado);
+            generarCodigoIntermedio(codigoDividido, 1);
+
+
         }else{
             JOptionPane.showMessageDialog(null, "No se puede generar el codigo intermedio porque el programa contiene errores...",
                     "Error en la generacion de codigo", JOptionPane.ERROR_MESSAGE);
@@ -680,9 +697,11 @@ public class Compilador extends javax.swing.JFrame {
         codigoIntermedio+=" \n"+cuidameloTantito;
         data+=code+proc;
         pantallaCodIn.setCodigo(codigoIntermedio);
+        pantallaCodASM.setCodigo(data);
         pantallaCodOp.setCodigo(codigoOptimizado);
-        System.out.println("Codigo Optimizado Print: " + codigoOptimizado);
-        
+                   
+        optimizarCodigoIntermedio(codigoIntermedio);
+        crearASM();
         jButton1.setEnabled(estadoCompilacion);
     }
 
@@ -2061,326 +2080,973 @@ public class Compilador extends javax.swing.JFrame {
         
     }//FIN SEMANTICO
     
-private int cLBL = 1, ccc = 0;
-
-private void generarCodigoIntermedio(ArrayList<String> codigoDiv, int control) {
-    int temp = 0;
-    if (control == 0) {
-        codigoIntermedio = "";
-    }
-    java.util.Set<String> etiquetasGeneradas = new java.util.HashSet<>();
-    // Recorre cada bloque de código delimitado por { y }
-    for (int x = 0; x < codigoDiv.size(); x++) {
-        String bloquesCod = codigoDiv.get(x);
-        // Separa las sentencias usando ";" como delimitador
-        String[] sentencias = bloquesCod.split(";");
-        for (String sentencia : sentencias) {
-            // Elimina espacios al inicio y final
-            sentencia = sentencia.trim();
-            if (sentencia.isEmpty()) {
-                continue;
-            }
-            // Caso: Declaración de clase (inicialización del programa)
-            if (sentencia.startsWith("CLASE")) {
-                codigoIntermedio += "INICIO: \n";
-                
-            }
-            // Caso: Configuración de variables (CONF)
-            else if (sentencia.startsWith("CONF")) {
-                String s[] = sentencia.split(" ");
-                if (s.length > 3) {
-                    switch (s[1]) {
-                        case "BOOL":
-                            codigoIntermedio += "   " + s[2] + " = " + s[4].charAt(0) + "\n";
-                            break;
-                        case "COLOR":
-                            codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4])) + "\n";
-                            break;
-                        case "CAD":
-                            int ini = sentencia.indexOf("'", sentencia.indexOf(s[4]));
-                            int fin = sentencia.lastIndexOf("'");
-                            if (ini != -1 && fin != -1 && fin > ini) {
-                                String cadena = sentencia.substring(ini, fin + 1);
-                                codigoIntermedio += "   " + s[2] + " = " + cadena + "\n";
-                            } else {
-                                codigoIntermedio += "   " + s[2] + " = ''\n";
-                            }
-                            break;
-                        default:
-                            codigoIntermedio += "   " + s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4])) + "\n";
-                            break;
-                    }
-                } else {
-                    switch (s[1]) {
-                        case "CAD":
-                            codigoIntermedio += "   " + s[2] + " = ''\n";
-                            break;
-                        case "FREC":
-                            codigoIntermedio += "   " + s[2] + " = 20\n";
-                            break;
-                        case "BOOL":
-                            codigoIntermedio += "   " + s[2] + " = V\n";
-                            break;
-                        case "COLOR":
-                            codigoIntermedio += "   " + s[2] + " = #000000\n";
-                            break;
-                        default:
-                            codigoIntermedio += "   " + s[2] + " = 0\n";
-                            break;
-                    }
-                }
-            }
-            // Caso: Declaración de vectores (VECT)
-            else if (sentencia.startsWith("VECT")) {
-                String s[] = sentencia.split(" ");
-                if (s[3].equals("=")) {
-                    codigoIntermedio += "   " + s[2] + " = " 
-                        + sentencia.substring(sentencia.indexOf(s[4]), sentencia.length() - 1) + "]\n";
-                } else {
-                    int t = Integer.parseInt(s[4]);
-                    String l = "";
-                    for (int i = 0; i < t; i++) {
-                        l += " 0 ,";
-                    }
-                    codigoIntermedio += "   " + s[2] + " = [" + l.substring(0, l.lastIndexOf(",")) + "]\n";
-                }
-            }
-            // Caso: Definición de procedimientos (DEF)
-            else if (sentencia.startsWith("DEF")) {
-                String s[] = sentencia.split(" ");
-                if (s[1].equals("principal")) {
-                    codigoIntermedio += "\nPRINCIPAL:\n";
-                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 1);
-                    x = pos[1];
-                    codigoIntermedio += "FIN\n";
-                    break; 
-                } else {
-                    codigoIntermedio += "PROC " + s[1] + ":\n";
-                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 2);
-                    x = pos[1];
-                    codigoIntermedio += "FIN PROC\n\n";
-                    break;
-                }
-            }
-            // Caso: Asignaciones y operaciones aritméticas
-            else if (sentencia.split(" ")[0].matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")) {
-                if (sentencia.endsWith(")")) {
-                    codigoIntermedio += "   Call " + sentencia.substring(0, sentencia.length() - 3) + "\n";
-                } else {
-                    String local = "";
-                    String t[] = sentencia.split(" ");
-                    if (t[1].startsWith("=")) {
-                        local += "   " + t[0] + " = " + t[t.length - 1] + "\n";
-                    } else if (t[1].startsWith("+") || t[1].startsWith("-")) {
-                        temp++;
-                        local += "   T" + temp + " = " + t[0] + t[1].charAt(0) + t[t.length - 1] + "\n";
-                        local += "   " + t[0] + " = " + "T" + temp + "\n";
-                    } else if (t[2].matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")) {
-                        temp++;
-                        local += "   T" + temp + " = " + t[2] + "\n";
-                        local += "   " + t[0] + "[T" + temp + "] = " + sentencia.substring(sentencia.indexOf("=") + 1) + "\n";
+    int cLBL=1;int ccc=0;
+    //Variables a usar: codigoIntermedio y cuidameloTantito
+    //Para controlar donde van las sentencias, o dentro de q nivel, propongo usar la variable control, posibles valores 1 y 2
+    private void generarCodigoIntermedio(ArrayList<String> codigoDiv, int control){
+        //Aqui vamos a generar el codigo intermedio
+        int temp = 0;
+        //codigoDiv tiene todas sentencias contenidas por los bloques de codigo delimitados por { y }
+        //bloquesCod representa cada uno de esos bloques de codigo, que puede tener mas de una
+        // sentencia, ya sean declaraciones, metodos de movimiento o estructuras de control
+        for (int x=0; x<codigoDiv.size();x++) {
+            String bloquesCod = codigoDiv.get(x);
+            //System.out.println((si++) + "-" + bloquesCod + "\n");
+            String[] sentencias = bloquesCod.split(";"); //---¿Esto lo que hace es separarlos cuando terminan en ;?
+            for (var sentencia : sentencias) {
+                //aqui vamos a poner los posibles casos
+                sentencia = sentencia.trim(); //quitar los espacios al inicio y al final pq luego no lo detecta
+                if (sentencia.startsWith("CLASE")) {
+                    codigoIntermedio += "INICIO: \n";
+                    data+="#start=robot.exe# \n" +
+                          "#start=stepper_motor.exe#\n"
+                         +".model small\n.stack\n.data\n"
+                         +"      MATRIZ DB 11111111B, 11111111B , 11111111B, 11111111B,11111111B ;2000H - 2004H   DISPLAY 1\n" +
+                          "             DB 00000000B, 00000000B,  00000000B, 00000000B,00000000B ;2005H - 2009H   DISPLAY 2\n" +
+                          "             DB 00000000B, 00111100B,  00010010B, 00111100B,00000000B ;200AH - 200EH   DISPLAY 3\n" +
+                          "             DB 00000000B, 00111110B,  00100000B, 00100000B,00000000B ;200FH - 2013H   DISPLAY 4\n" +
+                          "             DB 00000000B, 00000010B,  00111110B, 00000010B,00000000B ;2014H - 2018H   DISPLAY 5\n" +
+                          "             DB 00000000B, 00111110B,  00100010B, 00111110B,00000000B ;2019H - 201DH   DISPLAY 6 \n" +
+                          "             DB 00000000B, 00000000B,  00000000B, 00000000B,00000000B ;201EH - 2022H   DISPLAY 7\n" +
+                          "             DB 11111111B, 11111111B , 11111111B, 11111111B,11111111B ;2023H - 2027H \n" +
+                          "             \n" +
+                          "      BEP    Db 007      \n" +
+                          "             \n" +
+                          "      VUELTA   DB 0000_0110b\n" +
+                          "               DB 0000_0100b    \n" +
+                          "               DB 0000_0011b\n" +
+                          "               DB 0000_0010b\n" +
+                          "               \n" +
+                          "      VUELTAINV  DB 0000_0011b\n" +
+                          "                 DB 0000_0001b    \n" +
+                          "                 DB 0000_0110b\n" +
+                          "                 DB 0000_0010b \n" +
+                          "                 \n" +
+                          "      CADIMPR    DB '$'\n" +
+                          "      ACUMCAR    DW 0\n" +
+                          " \n" +
+                          "               \n" +
+                          "      FINVUELTA = 8h\n" +
+                          "      \n" +
+                          "      r_port equ 9  \n" +
+                          "      \n" +
+                          "      ESPACIOS DW 1 \n";
+                          
+                    proc+=  " ;****************************** PROCEDIMIENTOS *************************** \n";
+                    proc+=" ;----- ALARMA -----\n" 
+                            + "ALARMA proc\n"
+                            + "       mov ah,9\n"
+                            + "       mov al,007h    \n"
+                            + "       mov cx,3 \n"
+                            + "       int 10h\n"
+                            + "              \n"
+                            + "       MOV DX, 2000H \n"
+                            + "       MOV BX, 0        \n"
+                            + "DISPLAY:\n"
+                            + "        \n"
+                            + "       MOV CX, 5\n"
+                            + "       MOV SI, 0         \n"
+                            + "\n"
+                            + "COLUMNA:\n"
+                            + "       \n"
+                            + "       MOV AL, MATRIZ[BX][SI]\n"
+                            + "       OUT DX, AL \n"
+                            + "       INC SI\n"
+                            + "       INC DX \n"
+                            + "         \n"
+                            + "       CMP SI, 5\n"
+                            + "       LOOPNE COLUMNA \n"
+                            + "       \n"
+                            + "       ADD BX,5 \n"
+                            + "       CMP BX,40 \n"
+                            + "        \n"
+                            + "       \n"
+                            + "       JL DISPLAY\n"
+                            + "                     \n"
+                            + "RET  \n"
+                            + "ALARMA endp\n"
+                            + "\n"
+                            + "\n"
+                            + "\n"
+                            + "  ; ----- TOMAR -----\n"
+                            + "TOMAR proc \n"
+                            + "        \n"
+                            + "IniciarRueda:\n"
+                            + "mov bx, offset VUELTA \n"
+                            + "mov si, 0\n"
+                            + "mov cx, 0 \n"
+                            + "\n"
+                            + "darVuelta:\n"
+                            + "\n"
+                            + "espera: in al, 7     \n"
+                            + "        test al, 10000000b\n"
+                            + "        jz espera\n"
+                            + "\n"
+                            + "mov al, [bx][si]\n"
+                            + "out 7, al\n"
+                            + "\n"
+                            + "inc si\n"
+                            + "\n"
+                            + "cmp si, 4\n"
+                            + "jb darVuelta\n"
+                            + "mov si, 0\n"
+                            + " \n"
+                            + "\n"
+                            + "inc cx\n"
+                            + "cmp cx, FINVUELTA\n"
+                            + "jb  darVuelta \n"
+                            + "\n"
+                            + ";apagar luz\n"
+                            + "mov al, 6\n"
+                            + "out r_port, al\n"
+                            + "ret\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "TOMAR endp  \n"
+                            + "\n"
+                            + "\n"
+                            + "\n"
+                            + "  ; ----- SOLTAR -----\n"
+                            + "SOLTAR proc \n"
+                            + "        \n"
+                            + "IniciarRuedaS:\n"
+                            + "mov bx, offset VUELTAINV \n"
+                            + "mov si, 0\n"
+                            + "mov cx, 0 \n"
+                            + "\n"
+                            + "darVueltaS:\n"
+                            + "\n"
+                            + "esperaS: in al, 7     \n"
+                            + "        test al, 10000000b\n"
+                            + "        jz esperaS\n"
+                            + "\n"
+                            + "mov al, [bx][si]\n"
+                            + "out 7, al\n"
+                            + "\n"
+                            + "inc si\n"
+                            + "\n"
+                            + "cmp si, 4\n"
+                            + "jb darVueltaS\n"
+                            + "mov si, 0\n"
+                            + " \n"
+                            + "\n"
+                            + "inc cx\n"
+                            + "cmp cx, FINVUELTA\n"
+                            + "jb  darVueltaS \n"
+                            + "\n"
+                            + ";prender luz\n"
+                            + "mov al, 5\n"
+                            + "out r_port, al\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "SOLTAR endp\n"
+                            + " \n"
+                            + "       \n"
+                            + "\n"
+                            + " ;----- VER ----\n"
+                            + "VER proc \n"
+                            + "\n"
+                            + "call enfriar \n"
+                            + "    \n"
+                            + "mov al, 4\n"
+                            + "out r_port, al ;EXAMINA\n"
+                            + "        \n"
+                            + "ocupado: in al, r_port+2\n"
+                            + "       test al, 00000001b\n"
+                            + "       jz ocupado\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "VER endp \n"
+                            + "\n"
+                            + "\n"
+                            + "\n"
+                            + " ; ---- IZQUIERDA ----\n"
+                            + "IZQUIERDA proc  \n"
+                            + "    CALL ENFRIAR\n"
+                            + "    \n"
+                            + "    MOV AL, 2\n"
+                            + "    OUT 9, AL \n"
+                            + "    \n"
+                            + "    MOV CX,ESPACIOS  \n"
+                            + "CICLOIZ:\n"
+                            + "    CALL ENFRIAR\n"
+                            + "     \n"
+                            + "    mov al, 0\n"
+                            + "    out r_port, al \n"
+                            + "    \n"
+                            + "    CALL ENFRIAR \n"
+                            + "    \n"
+                            + "    mov al, 1\n"
+                            + "    out r_port, al \n"
+                            + "    \n"
+                            + "    CALL ENFRIAR  \n"
+                            + "    \n"
+                            + "    LOOP CICLOIZ\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "IZQUIERDA endp\n"
+                            + "\n"
+                            + "  \n"
+                            + "  \n"
+                            + "  \n"
+                            + "  \n"
+                            + " ; ---- DERECHA ----\n"
+                            + "DERECHA proc\n"
+                            + "    CALL ENFRIAR\n"
+                            + "    \n"
+                            + "    MOV AL, 3\n"
+                            + "    OUT 9, AL \n"
+                            + "    \n"
+                            + "    MOV CX,ESPACIOS  \n"
+                            + "CICLODER: \n"
+                            + "    CALL ENFRIAR\n"
+                            + "     \n"
+                            + "    mov al, 0\n"
+                            + "    out r_port, al\n"
+                            + "    \n"
+                            + "    CALL ENFRIAR  \n"
+                            + "    \n"
+                            + "    mov al, 1\n"
+                            + "    out r_port, al\n"
+                            + "    \n"
+                            + "    CALL ENFRIAR\n"
+                            + "\n"
+                            + "    LOOP CICLODER\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "DERECHA endp   \n"
+                            + "\n"
+                            + "\n"
+                            + "\n"
+                            + " ; ---- ADELANTE ----\n"
+                            + "ADELANTE proc \n"
+                            + "    CALL ENFRIAR  \n"
+                            + "    \n"
+                            + "    MOV CX,ESPACIOS  \n"
+                            + "CICLOADEL:\n"
+                            + "    CALL ENFRIAR\n"
+                            + "    \n"
+                            + "    mov al, 0\n"
+                            + "    out r_port, al\n"
+                            + "    \n"
+                            + "    CALL ENFRIAR  \n"
+                            + "    \n"
+                            + "    mov al, 1\n"
+                            + "    out r_port, al\n"
+                            + "    \n"
+                            + "    CALL ENFRIAR\n"
+                            + "\n"
+                            + "    LOOP CICLOADEL\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "ADELANTE endp \n"
+                            + "\n"
+                            + "\n"
+                            + "; ---- ATRAS ----\n"
+                            + " ATRAS proc   \n"
+                            + "    CALL ENFRIAR \n"
+                            + "    \n"
+                            + "    MOV AL, 3\n"
+                            + "    OUT 9, AL \n"
+                            + "    \n"
+                            + "    CALL ENFRIAR\n"
+                            + "    \n"
+                            + "    mov al, 0\n"
+                            + "    out r_port, al\n"
+                            + "    \n"
+                            + "    CALL ENFRIAR \n"
+                            + "    \n"
+                            + "    MOV AL, 3\n"
+                            + "    OUT 9, AL    \n"
+                            + "    \n"
+                            + "    MOV CX,ESPACIOS  \n"
+                            + "CICLOAT: \n"
+                            + "    CALL ENFRIAR \n"
+                            + "    \n"
+                            + "    mov al, 0\n"
+                            + "    out r_port, al  \n"
+                            + "    \n"
+                            + "    CALL ENFRIAR\n"
+                            + "    \n"
+                            + "    mov al, 1\n"
+                            + "    out r_port, al\n"
+                            + "    \n"
+                            + "    CALL ENFRIAR\n"
+                            + "     \n"
+                            + "    LOOP CICLOAT\n"
+                            + "\n"
+                            + "RET\n"
+                            + "\n"
+                            + "ATRAS endp\n"
+                            + "\n"
+                            + "\n"
+                            + "  ; ---- PARAR ----\n"
+                            + "PARAR proc\n"
+                            + "  mov al, 0\n"
+                            + "  out r_port, al \n"
+                            + "    \n"
+                            + "ret    \n"
+                            + "PARAR  endp \n"
+                            + "\n"
+                            + "   ;----- ENFRIAR -----\n"
+                            + " \n"
+                            + "ENFRIAR proc\n"
+                            + "busy: in al, r_port+2\n"
+                            + "      test al, 00000010b\n"
+                            + "      jnz busy ; busy, so wait.\n"
+                            + "ret     \n"
+                            + "ENFRIAR endp   \n"
+                            + "\n"
+                            + "\n"
+                            + "  ; ---- IMPRIMIRLCD ----\n"
+                            + "IMPRIMIR_LCD proc \n"
+                            + "     MOV ACUMCAR, 0\n"
+                            + "     MOV AX,0\n"
+                            + " \n"
+                            + "     \n"
+                            + "     MOV DX, 2050h\n"
+                            + "	 MOV SI, 0\n"
+                            + "     MOV CX, 15 \n"
+                            + "     \n"
+                            + "LOOPLCD:\n"
+                            + "	MOV AL, CADIMPR[SI]\n"
+                            + "	CMP AL, '$'\n"
+                            + "	JE SALIR\n"
+                            + "	OUT DX,AL \n"
+                            + "	INC SI\n"
+                            + "	INC DX\n"
+                            + "\n"
+                            + "	LOOP LOOPLCD \n"
+                            + "	\n"
+                            + "SALIR:\n"
+                            + "RET \n"
+                            + "          \n"
+                            + "IMPRIMIR_LCD  endp\n"
+                            + "\n"
+                            + "\n"
+                            + "  ; ---- IMPRIMIRCONSOLA ----\n"
+                            + "IMPRIMIR_CONSOLA proc \n"
+                            + "    MOV AH,9\n"
+                            + "    LEA DX,CADIMPR\n"
+                            + "    INT 21H\n"
+                            + "RET \n"
+                            + "          \n"
+                            + "IMPRIMIR_CONSOLA  endp\n\n";
+                } else if (sentencia.startsWith("CONF")) {
+                    String s[] = sentencia.split(" "); //conf td id *opas* *val*
+                    if (s.length > 3 ) {
+                        //codigoIntermedio += "   "+s[2] + " = " + sentencia.substring(sentencia.indexOf(s[4]),sentencia.length()) + "\n";
+                        switch (s[1]) {
+                            case "BOOL" -> data+="   "+s[2] + " dw '" + s[4].charAt(0) + "$'\n";
+                            case "COLOR" -> data+="   "+s[2] + " dw '"+sentencia.substring(sentencia.indexOf(s[4]),sentencia.length())+"$'\n";
+                            case "CAD" -> data+="   "+s[2]+" db "+sentencia.substring(sentencia.indexOf(s[4]),sentencia.lastIndexOf("'"))+"$'\n";
+                            default -> data+="   "+s[2] + " dw " + sentencia.substring(sentencia.indexOf(s[4]),sentencia.length()) + "\n";
+                        }
                     } else {
-                        temp++;
-                        local += "   T" + temp + " = " + t[2] + "\n";
-                        local += "   " + t[0] + "[T" + temp + "] = " + sentencia.substring(sentencia.indexOf("=") + 1) + "\n";
+                        switch (s[1]) {
+                            case "CAD" -> {
+                                codigoIntermedio += "   "+s[2] + " = '' \n";
+                                data += "   "+s[2] + " db '' \n";
+                            }
+                            case "FREC" -> {
+                                codigoIntermedio += "   "+s[2] + " = 20 \n";
+                                data += "   "+s[2] + " dw 20 \n";
+                            }
+                            case "BOOL" -> {
+                                codigoIntermedio += "   "+s[2] + " = V \n";
+                                data += "   "+s[2] + " dw 'V' \n";
+                            }
+                            case "COLOR" -> {
+                                codigoIntermedio += "   "+s[2] + " = #000000 \n";
+                                data += "   "+s[2] + " dw '#000000' \n";
+                            }
+                            default -> {
+                                codigoIntermedio += "   "+s[2] + " = " + 0 + "\n";
+                                data += "   "+s[2] + " dw " + 0 + "\n";
+                            }
+                        }
                     }
-                    codigoIntermedio += local;
+                } else if (sentencia.startsWith("VECT")) {
+                    String s[]=sentencia.split(" ");//vect td id [ v ] || vect td id = [ * ]
+                    if(s[3].equals("=")){
+                        codigoIntermedio+="   "+s[2]+" = "+sentencia.substring(sentencia.indexOf(s[4]),sentencia.length()-1)+"] \n";
+                        data+="   "+s[2]+" dw "+sentencia.substring(sentencia.indexOf(s[4])+1,sentencia.length()-2)+" \n";
+                    }else{
+                        int t = Integer.parseInt(s[4]);
+                        String l ="";
+                        for(int i = 0; i < t; i++) {
+                            l+=" 0 ,";
+                        }
+                        codigoIntermedio+="   "+s[2]+" = ["+ l.substring(0, l.lastIndexOf(","))+"] \n";
+                        data+="   "+s[2]+" dw "+ l.substring(0, l.lastIndexOf(","))+" \n";
+                    }
+                    //codigoIntermedio += "Declaracion de vector \n";
+                    
+                } else if (sentencia.startsWith("DEF")) {
+                    String s[] = sentencia.split(" ");
+                    if (s[1].equals("principal")) {
+                        codigoIntermedio += "\nPRINCIPAL: \n";
+                        code+=".code\n" +
+                                "   mov ax,@data\n" +
+                                "   mov ds,ax\n" +
+                                "   mov es,ax\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 1);
+                        x=pos[1];
+                        codigoIntermedio += "FIN \n";
+                        code+="FINZ:\n" + 
+                                "   mov ax,4c00h\n" +
+                                "   int 21h\n\n";
+                        break;
+                    } else {
+                        cuidameloTantito += "PROC "+s[1]+":\n";
+                        proc+=s[1]+" PROC \n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), 2);
+                        x=pos[1];
+                        cuidameloTantito += "FIN PROC\n\n";
+                        proc+="   RET\n"
+                            +s[1]+" ENDP \n\n";
+                        break;
+                    }
+
+                } else if (sentencia.split(" ")[0].matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")) { //.matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")
+                    if (sentencia.endsWith(")")) {
+                        
+                        if(control==1){
+                            codigoIntermedio += "   Call "+sentencia.substring(0, sentencia.length()-3)+" \n";
+                            code+="   CALL "+sentencia.substring(0, sentencia.length()-3)+" \n";
+                        }else{
+                            cuidameloTantito += "   Call "+sentencia.substring(0, sentencia.length()-3)+" \n";
+                            proc+="   CALL "+sentencia.substring(0, sentencia.length()-3)+" \n";
+                        }
+                        //ASIGNACION
+                    } else {
+                        //id [ v ] = val 
+                        String local = "";String s2="";
+                        String t[] = sentencia.split(" ");
+                        if (t[1].startsWith("=")) {
+                            local += "   "+t[0] + " = " + t[t.length - 1] + " \n";
+                            s2+="   MOV "+t[0]+", "+sentencia.substring(sentencia.indexOf(t[2]), sentencia.length())+"\n";
+                        } else if (t[1].startsWith("+") || t[1].startsWith("-")) {
+                            temp++;
+                            local += "   T" + temp + " = " + t[0] + t[1].charAt(0) + t[t.length - 1] + " \n";
+                            local += "   "+t[0] + " = " + "T" + temp + " \n";
+                            if(t[1].startsWith("+")){
+                                s2+="   MOV AX, "+t[0]+"\n"+
+                                    "   MOV BX, "+t[t.length - 1]+"\n"+
+                                    "   ADD AX, BX\n"+
+                                    "   MOV "+t[0]+", AX \n";
+                            }else{
+                                s2+="   MOV AX, "+t[0]+"\n"+
+                                    "   MOV BX, "+t[t.length - 1]+"\n"+
+                                    "   SUB AX, BX\n"+
+                                    "   MOV "+t[0]+", AX \n";
+                            }
+                        }else if(t[2].matches("[a-zñ]([A-Za-zÑñ]|[0-9]){0,29}")){
+                            temp++;
+                            local+="    T"+temp+" = "+t[2]+"\n";
+                            local+="    "+t[0]+"[T"+temp+"]"+" = "+sentencia.substring(sentencia.indexOf("=")+1, sentencia.length())+"\n";
+                            s2+="   MOV SI, "+t[2]+"\n";
+                            s2+="   MOV "+t[0]+"[SI], "+sentencia.substring(sentencia.indexOf("=")+1, sentencia.length())+"\n";
+                        }else{
+                            temp++;
+                            local+="    T"+temp+" = "+t[2]+"\n";
+                            local+="    "+t[0]+"[T"+temp+"]"+" = "+sentencia.substring(sentencia.indexOf("=")+1, sentencia.length())+"\n";
+                            s2+="   MOV SI, "+t[2]+"\n";
+                            s2+="   MOV "+t[0]+"[SI], "+sentencia.substring(sentencia.indexOf("=")+1, sentencia.length())+"\n";
+                        }
+                        if(control==1){
+                            codigoIntermedio+=local;
+                            code+=s2;
+                        }else{
+                            cuidameloTantito+=local;
+                            proc+=s2;
+                        }
+                    }
+                } else if (sentencia.startsWith("SI") || sentencia.startsWith("SINO")) {
+                    String local="LBL"+(cLBL++)+":\n";
+                    String emu="LBL"+(cLBL-1)+":\n";
+                    if(sentencia.startsWith("SI ")){
+                        local+="    if "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))
+                               +"   goto LBL"+(cLBL)+"\n"+
+                                "   goto LBL"+(cLBL+1)+"\n";
+                        String s[] = sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )")).trim().split(" ");
+                        System.out.println(Arrays.toString(s));
+                        if(s[0].equals("REVISAR")){//REVUISAr ( 1 , 2 ) op valor
+                            emu+="   call VER \n" +
+                                 "   in al, r_port + 1  \n"
+                               + "   cmp al, 7\n"
+                               + "   JNZ LBL"+(cLBL+1)+"\n";
+                        }else if(s[0].startsWith("VER")){
+                            emu+="   call VER           \n"
+                               + "   in al, r_port + 1  \n"
+                               + "   cmp al, 255  \n"
+                               + "   JE LBL"+(cLBL+1)+"\n";
+                        }else{
+                            emu+="   MOV AX, "+s[0]+"\n";
+                            if(s[s.length-1].equals("VERDAERO") || s[s.length-1].equals("FALSO"))
+                                emu+="   MOV BX, "+s[s.length-1].charAt(0)+"\n";
+                            else
+                                emu+="   MOV BX, "+s[s.length-1]+"\n";
+                                emu+="   CMP AX,BX \n";
+                            switch (s[1]) {
+                                case "==" -> {
+                                    emu+="   JE LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case "!=" -> {
+                                    emu+="   JNE LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case "<" -> {
+                                    emu+="   JB LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case ">" -> {
+                                    emu+="   JG LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case "<=" -> {
+                                    emu+="   JBE LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case ">=" -> {
+                                    emu+="   JGE LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                default ->{
+                                    emu+="   JMP LBL"+(cLBL)+"\n";
+                                    emu+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                            }
+                        }
+                    }else{//si la palabra es SINO
+                        local=" goto LBL"+(cLBL+1)+"\n";
+                        emu="   JMP LBL"+(cLBL+1)+"\n";
+                    }
+                    if(control==1){
+                        codigoIntermedio += local +"LBL"+(cLBL)+":\n";
+                        code+=emu+"LBL"+cLBL+":\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                        x=pos[1];
+                        if(sentencia.startsWith("SINO")){
+                            codigoIntermedio += "LBL" + (++cLBL) + ": \n";
+                            code += "LBL" + (cLBL++) + ":\n";
+                        }
+                        break;
+                    }else{
+                        cuidameloTantito += local +"LBL"+(cLBL)+":\n";
+                        proc+=emu+"LBL"+cLBL+":\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                        x=pos[1];
+                        if(sentencia.startsWith("SINO")){
+                            cuidameloTantito += "LBL" + (++cLBL) + ": \n";
+                            proc += "LBL" + (cLBL++) + ":\n";
+                        }
+                        break;
+                    }
+                    
+                } else if (sentencia.startsWith("MIENTRAS")) {
+                    int sp;
+                    if(control==1){
+                        codigoIntermedio+="LBL"+cLBL+": \n";sp=cLBL;
+                        codigoIntermedio+=" if "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))
+                                +" goto LBL"+(++cLBL)+"\n"+
+                                "   goto LBL"+(cLBL+1)+"\n"+"LBL"+cLBL+":\n";
+                        code+="LBL"+sp+": \n";
+                        String[] cmp = sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )")).trim().split(" ");
+                        System.out.println(Arrays.toString(cmp));
+                        if(cmp[0].equals("REVISAR")){//REVUISAr ( 1 , 2 ) op valor
+                            code+="   call VER \n" +
+                                 "   in al, r_port + 1  \n"
+                               + "   cmp al, 7\n"
+                               + "   JNZ LBL"+(cLBL+1)+"\n";
+                        }else if(cmp[0].startsWith("VER")){
+                            code+="call VER            \n"
+                               + "   in al, r_port + 1  \n"
+                               + "   cmp al, 255  \n"
+                               + "   JE LBL"+(cLBL+1)+"\n";
+                        }else{
+                            code+="   MOV AX, "+cmp[0]+"\n";
+                            if(cmp[cmp.length-1].equals("VERDAERO") || cmp[cmp.length-1].equals("FALSO"))
+                                code+="   MOV BX, "+cmp[cmp.length-1].charAt(0)+"\n";
+                            else
+                                code+="   MOV BX, "+cmp[cmp.length-1]+"\n";
+                            code+="   CMP AX,BX \n";
+                            switch (cmp[1]) {
+                                case "==" -> {
+                                    code+="   JE LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case "!=" -> {
+                                    code+="   JNE LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case "<" -> {
+                                    code+="   JB LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case ">" -> {
+                                    code+="   JG LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case "<=" -> {
+                                    code+="   JBE LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                case ">=" -> {
+                                    code+="   JGE LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                                default ->{
+                                    code+="   JMP LBL"+(cLBL)+"\n";
+                                    code+="   JMP LBL"+(cLBL+1)+"\n";
+                                }
+                            }
+                        }
+                        code+="LBL"+cLBL+":\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                        x=pos[1];
+                        codigoIntermedio+=" goto LBL"+sp+"\n"+"LBL"+(++cLBL)+":\n";
+                        code+="   JMP LBL"+sp+"\n"+ "LBL"+(cLBL)+":\n";
+                        break;
+                    }else{//IF DEL CONTROL
+                        cuidameloTantito+="LBL"+cLBL+":\n";sp=cLBL;
+                        cuidameloTantito+=" if "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))
+                                +" goto LBL"+(++cLBL)+"\n"+
+                                "   goto LBL"+(cLBL+1)+"\n"+"LBL"+cLBL+":\n";
+                        proc+="LBL"+sp+": \n";
+                        String[] cmp = sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )")).trim().split(" ");
+                        System.out.println(Arrays.toString(cmp));
+                        if(cmp[0].equals("REVISAR")){//REVUISAr ( 1 , 2 ) op valor
+                            proc+="call VER            \n"
+                               + "   in al, r_port + 1  \n"
+                               + "   cmp al, 255  \n"
+                               + "   JNZ LBL"+(cLBL+1)+"\n";
+                        }else if(cmp[0].startsWith("VER")){
+                            proc+="call VER            \n"
+                               + "   in al, r_port + 1  \n"
+                               + "   cmp al, 7  \n"
+                               + "   JNZ LBL"+(cLBL+1)+"\n";
+                        }else{
+                            proc+="   MOV AX, "+cmp[0]+"\n";
+                            if(cmp[cmp.length-1].equals("VERDAERO") || cmp[cmp.length-1].equals("FALSO"))
+                                proc+="   MOV BX, "+cmp[cmp.length-1].charAt(0)+"\n";
+                            else
+                                proc+="   MOV BX, "+cmp[cmp.length-1]+"\n";
+                            proc+="   CMP AX,BX \n";
+                            switch (cmp[1]) {
+                                case "==" -> {
+                                    proc+="   JE LBL"+(cLBL)+"\n";
+                                }
+                                case "!=" -> {
+                                    proc+="   JNE LBL"+(cLBL)+"\n";
+                                }
+                                case "<" -> {
+                                    proc+="   JB LBL"+(cLBL)+"\n";
+                                }
+                                case ">" -> {
+                                    proc+="   JG LBL"+(cLBL)+"\n";
+                                }
+                                case "<=" -> {
+                                    proc+="   JBE LBL"+(cLBL)+"\n";
+                                }
+                                case ">=" -> {
+                                    proc+="   JGE LBL"+(cLBL)+"\n";
+                                }
+                                default ->{
+                                    proc+="   JMP LBL"+(cLBL)+"\n";
+                                }
+                            }
+                        }
+                        proc+="   JMP LBL"+(cLBL+1)+"\n";
+                        proc+="LBL"+cLBL+":\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                        x=pos[1];
+                        cuidameloTantito+=" goto LBL"+sp+"\n"+"LBL"+(++cLBL)+":\n";
+                        proc+=" JMP LBL"+sp+"\n"+"LBL"+cLBL+":\n";
+                        break;
+                    }
+                    
+                } else if (sentencia.startsWith("REPETIR")) {
+                    if(control==1){
+                        codigoIntermedio+="LBL"+(++cLBL)+":\n ";
+                        codigoIntermedio+=" REPETIR , "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+"\n";
+                        code+="  MOV cx, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+"\n";
+                        code+="LBL"+cLBL+":\n";
+                        cLBL++;int spt=cLBL;
+                        //code+="LBL"+(spt-1)+":\n";
+                        code+="  PUSH cx\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                        x=pos[1];
+                        codigoIntermedio+=" LOOP LBL"+spt+"\n";cLBL++;
+                        code+="  POP cx\n";
+                        code+="  LOOP LBL"+(spt-1)+"\n";
+                        break;
+                    }else{//PARA PROCEDIMIENTOS
+                        cuidameloTantito += "LBL "+(++cLBL)+":\n "
+                        + "REPETIR , "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+"\n";
+                        proc+="  MOV cx, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+"\n";
+                        proc+="LBL"+cLBL+":\n";
+                        cLBL++;int spt=cLBL;
+                        //proc+="LBL"+(spt-1)+":\n";
+                        proc+="  PUSH cx\n";
+                        int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv, codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
+                        generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
+                        x=pos[1];
+                        cuidameloTantito+=" LOOP LBL"+spt+"\n";cLBL++;
+                        proc+="  POP cx\n";
+                        proc+="  LOOP LBL"+(spt-1)+"\n";
+                        break;
+                    }
+                } else if (sentencia.startsWith("ADELANTE")) {
+                    if(control==1){
+                        codigoIntermedio += "   MACRO_ADELANTE "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code+="   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        code+="   CALL ADELANTE \n";
+                    }else{
+                        cuidameloTantito += "   MACRO_ADELANTE "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc += "   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        proc+="   CALL ADELANTE \n";
+                    }
+                    
+                } else if (sentencia.startsWith("ATRAS")) {
+                    if(control==1){
+                        codigoIntermedio += "   MACRO_ATRAS "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code+="   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        code+="   CALL ATRAS \n";
+                    }else{
+                        cuidameloTantito += "   MACRO_ATRAS "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc += "   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        proc+="   CALL ATRAS \n";
+                    }
+                    
+                } else if (sentencia.startsWith("IZQUIERDA")) {
+                    if(control==1){
+                        codigoIntermedio +="   MACRO_IZQUIERDA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code+="   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        code+="   CALL IZQUIERDA \n";
+                    }else{
+                        cuidameloTantito +="   MACRO_IZQUIERDA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc += "   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        proc+="   CALL IZQUIERDA \n";
+                    }
+                    
+                } else if (sentencia.startsWith("DERECHA")) {
+                    if(control==1){
+                        codigoIntermedio += "   MACRO_DERECHA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code+="   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        code+="   CALL DERECHA \n";
+                    }else{
+                        cuidameloTantito += "   MACRO_DERECHA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc += "   MOV ESPACIOS, "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" ,"))+"\n";
+                        proc+="   CALL DERECHA \n";
+                    }
+                    
+                } else if (sentencia.startsWith("PARAR")) {
+                    if(control==1){
+                        codigoIntermedio += "   MACRO_PARAR\n";
+                        code += "   CALL PARAR\n";
+                    }else{
+                        cuidameloTantito += "   MACRO_PARAR\n";
+                        proc += "   CALL PARAR\n";
+                    }
+                    
+                } else if (sentencia.startsWith("REVISAR")) {
+                    if(control==1){
+                        codigoIntermedio +="   MACRO_REVISAR "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code +="   CALL VER  \n";
+                    }else{
+                        cuidameloTantito += "   MACRO_REVISAR"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc += "   CALL VER  \n";
+                    }
+                    
+                }else if(sentencia.startsWith("IMPRVECTOR")){
+                    if(control==1){
+                        codigoIntermedio+="   MACRO_IMPR_VECTOR"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code+="   MACRO_IMPR_VECTOR"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                    }else{
+                        cuidameloTantito+="   MACRO_IMPR_VECTOR"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc+="   MACRO_IMPR_VECTOR"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                    }
+                }else if(sentencia.startsWith("IMPR")){
+                    if(control==1){
+                        codigoIntermedio+="   MACRO_IMPR"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        String s[]=sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )")).trim().split(" ");
+                        if(s[0].startsWith("'")){
+                                data+="\n   cadz"+(ccc)+" db "+s[0].substring(0, s[0].length()-1)+"$'\n";
+                                code+="   MOV SI, OFFSET cadz" + (ccc++) + "\n";
+                                code += " MOV DI, OFFSET CADIMPR \n"
+                                        + "MOV CX, 8 \n"
+                                        + "REP MOVSB\n";
+                            }else{
+                                code+="   MOV SI, OFFSET "+ s[0] + "\n";
+                                code+="   MOV DI, OFFSET CADIMPR \n"
+                                        + "MOV CX, 8 \n"
+                                        + "REP MOVSB\n";
+                            }
+                        if(s[2].equals("LCD")){
+                            code += "   CALL IMPRIMIR_LCD \n";
+                        }else{
+                            code += "   CALL IMPRIMIR_CONSOLA\n";
+                        }
+                    }else{
+                        cuidameloTantito+="   MACRO_IMPR "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        String s[]=sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )")).trim().split(" ");
+                        if(s[0].startsWith("'")){
+                                data+="\n   cadz"+(ccc)+" db "+s[0].substring(0, s[0].length()-1)+"$'\n";
+                                proc+="   MOV SI, OFFSET cadz" + (ccc++) + "\n";
+                                proc += " MOV DI, OFFSET CADIMPR \n"
+                                        + "MOV CX, 8 \n"
+                                        + "REP MOVSB\n";
+                            }else{
+                                proc+="   MOV SI, OFFSET "+ s[0] + "\n";
+                                proc +="   MOV DI, OFFSET CADIMPR \n"
+                                        + "MOV CX, 8 \n"
+                                        + "REP MOVSB\n";
+                                
+                            }
+                        if(s[2].equals("LCD")){
+                            proc += "   CALL IMPRIMIR_LCD \n";
+                        }else{
+                            proc += "   CALL IMPRIMIR_CONSOLA\n";
+                        }
+                    }
+                }else if(sentencia.startsWith("ALARMA")){
+                    if(control==1){
+                        codigoIntermedio+="   MACRO_ALARMA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        code+="   CALL ALARMA \n";
+                    }else{
+                        cuidameloTantito+="   MACRO_ALARMA"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        proc+="   CALL ALARMA \n";
+                    }
+                }else if(sentencia.startsWith("TOMAR")){
+                    if(control==1){
+                        codigoIntermedio+="   MACRO_TOMAR \n";
+                        code+="   CALL TOMAR \n";
+                    }else{
+                        cuidameloTantito+="   MACRO_TOMAR  \n";
+                        proc+="   CALL TOMAR  \n";
+                    }
+                }else if(sentencia.startsWith("SOLTAR")){
+                    if(control==1){
+                        codigoIntermedio+="   MACRO_SOLTAR \n";
+                        code+="   CALL SOLTAR \n";
+                    }else{
+                        cuidameloTantito+="   MACRO_SOLTAR \n";
+                        proc+="   CALL SOLTAR \n";
+                    }
+                }else if(sentencia.startsWith("CAJA")){
+                    if(control==1){
+                        codigoIntermedio+="   MACRO_CAJA"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        //code+="   MACRO_CAJA"+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                    }else{
+                        cuidameloTantito+="   MACRO_CAJA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                        //proc+="   MACRO_CAJA "+sentencia.substring(sentencia.indexOf(" (")+2,sentencia.lastIndexOf(" )"))+" \n";
+                    }
                 }
-            }
-            // Caso: Estructuras de control condicional (SI/SINO)
-            else if (sentencia.startsWith("SI") || sentencia.startsWith("SINO")) {
-                String etiqueta;
-                do {
-                    etiqueta = "LBL" + cLBL++;
-                } while (etiquetasGeneradas.contains(etiqueta));
-                etiquetasGeneradas.add(etiqueta);
-                String local = etiqueta + ":\n";
-                if (sentencia.startsWith("SI ")) {
-                    // Genera dos nuevas etiquetas para los saltos
-                    String etiquetaTrue, etiquetaFalse;
-                    do {
-                        etiquetaTrue = "LBL" + cLBL++;
-                    } while (etiquetasGeneradas.contains(etiquetaTrue));
-                    etiquetasGeneradas.add(etiquetaTrue);
-                    do {
-                        etiquetaFalse = "LBL" + cLBL++;
-                    } while (etiquetasGeneradas.contains(etiquetaFalse));
-                    etiquetasGeneradas.add(etiquetaFalse);
-                    local += "    if " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")"))
-                            + " goto " + etiquetaTrue + "\n"
-                            + "   goto " + etiquetaFalse + "\n";
-                    codigoIntermedio += local + etiquetaTrue + ":\n";
-                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
-                    x = pos[1];
-                    // Añade etiquetaFalse después del bloque SI
-                    codigoIntermedio += etiquetaFalse + ":\n";
-                    break;
-                } else { // SINO
-                    // SINO sólo hace goto a la siguiente etiqueta
-                    String etiquetaSino;
-                    do {
-                        etiquetaSino = "LBL" + cLBL++;
-                    } while (etiquetasGeneradas.contains(etiquetaSino));
-                    etiquetasGeneradas.add(etiquetaSino);
-                    local = " goto " + etiquetaSino + "\n";
-                    codigoIntermedio += local + etiquetaSino + ":\n";
-                    int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                            codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                    generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
-                    x = pos[1];
-                    // Añade otra etiqueta para el final del SINO
-                    String etiquetaFinSino;
-                    do {
-                        etiquetaFinSino = "LBL" + cLBL++;
-                    } while (etiquetasGeneradas.contains(etiquetaFinSino));
-                    etiquetasGeneradas.add(etiquetaFinSino);
-                    codigoIntermedio += etiquetaFinSino + ":\n";
-                    break;
-                }
-            }
-            // Caso: Bucle MIENTRAS
-            else if (sentencia.startsWith("MIENTRAS")) {
-                String etiquetaInicio, etiquetaCond, etiquetaFin;
-                do {
-                    etiquetaInicio = "LBL" + cLBL++;
-                } while (etiquetasGeneradas.contains(etiquetaInicio));
-                etiquetasGeneradas.add(etiquetaInicio);
-                do {
-                    etiquetaCond = "LBL" + cLBL++;
-                } while (etiquetasGeneradas.contains(etiquetaCond));
-                etiquetasGeneradas.add(etiquetaCond);
-                do {
-                    etiquetaFin = "LBL" + cLBL++;
-                } while (etiquetasGeneradas.contains(etiquetaFin));
-                etiquetasGeneradas.add(etiquetaFin);
-                codigoIntermedio += etiquetaInicio + ":\n";
-                codigoIntermedio += " if " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")"))
-                        + " goto " + etiquetaCond + "\n"
-                        + "   goto " + etiquetaFin + "\n"
-                        + etiquetaCond + ":\n";
-                int[] pos = CodeBlock.getPositionOfBothMarkers(codigoDiv,
-                        codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1));
-                generarCodigoIntermedio(new ArrayList<>(codigoDiv.subList(pos[0], pos[1])), control);
-                x = pos[1];
-                codigoIntermedio += " goto " + etiquetaInicio + "\n" + etiquetaFin + ":\n";
-                break;
-            }
-            // Caso: Bucle REPETIR
-            else if (sentencia.startsWith("REPETIR")) {
-                String etiquetaInicio, etiquetaFin;
-                do {
-                    etiquetaInicio = "LBL" + cLBL++;
-                } while (etiquetasGeneradas.contains(etiquetaInicio));
-                etiquetasGeneradas.add(etiquetaInicio);
-                do {
-                    etiquetaFin = "LBL" + cLBL++;
-                } while (etiquetasGeneradas.contains(etiquetaFin));
-                etiquetasGeneradas.add(etiquetaFin);
-                codigoIntermedio += etiquetaInicio + ":\n";
-                String veces = sentencia.substring(
-                    sentencia.indexOf("(") + 1,
-                    sentencia.lastIndexOf(")")
-                );
-                codigoIntermedio += " REPETIR , " + veces + "\n";
-                int[] pos = CodeBlock.getPositionOfBothMarkers(
-                    codigoDiv,
-                    codigoDiv.get(codigoDiv.indexOf(bloquesCod) + 1)
-                );
-                generarCodigoIntermedio(
-                    new ArrayList<>(codigoDiv.subList(pos[0], pos[1])),
-                    control
-                );
-                x = pos[1];
-                codigoIntermedio += " LOOP " + etiquetaFin + "\n";
-                break;
-            }
-            // Caso: Macros o llamadas a funciones específicas
-            else if (sentencia.startsWith("ADELANTE")) {
-                codigoIntermedio += "   MACRO_ADELANTE " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("ATRAS")) {
-                codigoIntermedio += "   MACRO_ATRAS " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("IZQUIERDA")) {
-                codigoIntermedio += "   MACRO_IZQUIERDA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("DERECHA")) {
-                codigoIntermedio += "   MACRO_DERECHA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("PARAR")) {
-                codigoIntermedio += "   MACRO_PARAR\n";
-            } else if (sentencia.startsWith("REVISAR")) {
-                codigoIntermedio += "   MACRO_REVISAR " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("IMPRVECTOR")) {
-                codigoIntermedio += "   MACRO_IMPR_VECTOR " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("IMPR")) {
-                codigoIntermedio += "   MACRO_IMPR " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("ALARMA")) {
-                codigoIntermedio += "   MACRO_ALARMA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            } else if (sentencia.startsWith("TOMAR")) {
-                codigoIntermedio += "   MACRO_TOMAR\n";
-            } else if (sentencia.startsWith("SOLTAR")) {
-                codigoIntermedio += "   MACRO_SOLTAR\n";
-            } else if (sentencia.startsWith("CAJA")) {
-                codigoIntermedio += "   MACRO_CAJA " + sentencia.substring(sentencia.indexOf("(") + 2, sentencia.lastIndexOf(")")) + "\n";
-            }
-        } // Fin de for de sentencias
-    } // Fin de for de bloques de código
-}
+                
+            }//For de las sentencias
+            
+        }//bloques de codigo
+        
+    }//FINAL DE LA GENERACION de CodigoINtermedio
     
 private String optimizarCodigoIntermedio(String codigo) {
-    StringBuilder optimizado = new StringBuilder();
+    StringBuilder optimized = new StringBuilder();
     String[] lineas = codigo.split("\\n");
-
-    // Eliminación de líneas vacías y redundancias simples
-    String lineaAnterior = "";
+    boolean inProcedure = false;
+    
     for (String linea : lineas) {
         linea = linea.trim();
-        if (linea.isEmpty()) continue;
-
-        // Eliminar asignaciones redundantes (ej: x = x)
-        if (linea.matches("\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*\\1\\s*")) continue;
-
-        // Eliminar saltos redundantes a la siguiente línea (goto misma etiqueta)
-        if (lineaAnterior.startsWith("goto") && linea.startsWith("LBL") &&
-            lineaAnterior.split(" ")[1].equals(linea.replace(":", ""))) {
+        
+        // Skip truly empty lines
+        if (linea.isEmpty()) {
             continue;
         }
-
-        optimizado.append(linea).append("\n");
-        lineaAnterior = linea;
-    }
-
-    String resultado = optimizado.toString();
-
-    // Recolectar etiquetas utilizadas por 'goto' e 'if'
-    Set<String> etiquetasUsadas = new HashSet<>();
-    Matcher matcher = Pattern.compile("\\bgoto (LBL\\d+)\\b").matcher(resultado);
-    while (matcher.find()) {
-        etiquetasUsadas.add(matcher.group(1));
-    }
-    matcher = Pattern.compile("\\bif .*? goto (LBL\\d+)\\b").matcher(resultado);
-    while (matcher.find()) {
-        etiquetasUsadas.add(matcher.group(1));
-    }
-
-    // Eliminar etiquetas no utilizadas
-    StringBuilder finalOptimizado = new StringBuilder();
-    lineas = resultado.split("\\n");
-    for (String linea : lineas) {
-        if (linea.startsWith("LBL")) {
-            String etiqueta = linea.replace(":", "").trim();
-            if (!etiquetasUsadas.contains(etiqueta)) continue;
+        
+        // Always preserve section markers and structural elements
+        if (linea.startsWith("INICIO:") || 
+            linea.startsWith("PRINCIPAL:") ||
+            linea.startsWith("FIN") ||
+            linea.startsWith("PROC") ||
+            linea.startsWith("Call")) {
+            optimized.append(linea).append("\n");
+            inProcedure = linea.startsWith("PROC");
+            continue;
         }
-        finalOptimizado.append(linea).append("\n");
+        
+        // Preserve array declarations
+        if (linea.contains("[") && linea.contains("]")) {
+            optimized.append(linea).append("\n");
+            continue;
+        }
+        
+        // Preserve all lines within procedures
+        if (inProcedure) {
+            optimized.append(linea).append("\n");
+            continue;
+        }
+        
+        // For non-procedure code, only optimize simple assignments
+        if (linea.contains("=")) {
+            // Only optimize numeric constant assignments
+            if (linea.matches(".*=\\s*\\d+\\s*$")) {
+                String[] parts = linea.split("=");
+                String var = parts[0].trim();
+                String val = parts[1].trim();
+                optimized.append(var).append(" = ").append(val).append("\n");
+            } else {
+                // Preserve all other assignments as-is
+                optimized.append(linea).append("\n");
+            }
+        } else {
+            // Preserve all other lines
+            optimized.append(linea).append("\n");
+        }
     }
-
-    System.out.println("CÓDIGO OPTIMIZADO:\n" + finalOptimizado);
-    codigoOptimizado = finalOptimizado.toString();
-    return finalOptimizado.toString();
+    
+    String result = optimized.toString();
+    System.out.println("CÓDIGO OPTIMIZADO:\n" + result);
+    codigoOptimizado = result;
+    return result;
 }
+    private void crearASM(){
+        try {
+            //System.out.println("ventana: "+this.getTitle());
+            String tit = this.getTitle();
+            tit = tit.substring(0, tit.indexOf("."));
+            String ruta = "C:\\WareLangCompiler\\"+tit +".asm";
+            File file = new File(ruta);
+            
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            
+            FileWriter fw = new FileWriter(file);
+            try (BufferedWriter bw = new BufferedWriter(fw)) {
+                bw.write(data);
+            }
+            
+            System.out.println("Archivo creado: " + file.getName());
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error.");
+            //e.printStackTrace();
+        }
+    }//FIN AQP
+
     private void cambioColor() {
         /* Limpiar el arreglo de colores */
         textocolor.clear();
@@ -2482,7 +3148,11 @@ private String optimizarCodigoIntermedio(String codigo) {
     private void limpiarAreaCodigo() {
         // Functions.clearDataInTable(tablaSimbolos);
         codigoIntermedio = "";
+        cuidameloTantito = "";
         codigoOptimizado = "";
+        data = "";
+        proc = "";
+        code = "";
         consola.setText("");
         tokens.clear();
         errores.clear();
@@ -2567,14 +3237,17 @@ private String optimizarCodigoIntermedio(String codigo) {
     private javax.swing.JTextPane areaCodigo;
     private javax.swing.JButton btnAbrir;
     private javax.swing.JButton btnCompilar;
+    private javax.swing.JButton btnEjecutar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JButton btnGuardarC;
     private javax.swing.JButton btnNuevo;
     private javax.swing.JTextPane consola;
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -2591,5 +3264,7 @@ private String optimizarCodigoIntermedio(String codigo) {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel panelButtonCompilerExecute;
+    private javax.swing.JPanel panelButtonCompilerExecute1;
+    private javax.swing.JPanel panelButtonCompilerExecute2;
     // End of variables declaration//GEN-END:variables
 }

@@ -1,73 +1,54 @@
 ;Rusty - Código ASM Generado
 
 ; Inicio del programa
-MOV colorVacio, #70FF00
-MOV fin, 'Finalización de la revision'
-MOV cajaVacia, 'Caja vacia'
-MOV cajaLlena, 'Caja llena'
-MOV alarm, 20
-MOV x, 1
-MOV buscados, [ 'Zucaritas' , 'Pan Bimbo' , 'Canelitas' ]
-; PROC tomarHay:
-CMP REVISAR ( #70FF00 , 12 ), FALSO
+MOV pan, 'Wrexler'
+MOV colorPan, #000000
+MOV a, 25
+; PROC recorrido:
+LBL1:
+CMP VERADELANTE ( ), VERDADERO
 JE LBL2
 JMP LBL3
 LBL2:
-CALL TOMAR
-CALL IMPR 'C' , LCD
+CALL ADELANTE 1 , 2
+JMP LBL1
 LBL3:
-JMP LBL5
-CALL IMPR 't' , LCD
-CALL ALARMA alarm
+CMP VERIZQUIERDA ( ), VERDADERO
+JE LBL5
+JMP LBL6
+LBL5:
+CALL IZQUIERDA 3 , 1
+LBL6:
+CMP VERATRAS ( ), VERDADERO
+JE LBL8
+JMP LBL9
+LBL8:
+CALL ATRAS 4 , 2
+LBL9:
 ; Fin del bloque
-; PROC recorridoZucaritas:
-; REPETIR ,  3
-CMP VERADELANTE ( ), VERDADERO
-JE LBL10
-JMP LBL11
+; PROC regreso:
 LBL10:
-MOV cajaLlena2, 'Producto tomado'
-MOV T1, x
-; buscados[T1] =  'bueno'
-CALL ADELANTE 4 , 2
+CMP VERATRAS ( ), VERDADERO
+JE LBL11
+JMP LBL12
 LBL11:
-JMP LBL13
-CALL PARAR
-CALL IMPR 'obstruccion' , LCD
-; LOOP LBL8
-; Fin del bloque
-; PROC recorridoPan:
-MOV cajaLlena3, 'Producto tomado'
-; REPETIR ,  2
+CALL ATRAS 1 , 2
+JMP LBL10
+LBL12:
 CMP VERDERECHA ( ), VERDADERO
-JE LBL18
-JMP LBL19
-LBL18:
-CALL IZQUIERDA 2 , 2
-LBL19:
-JMP LBL21
-CALL PARAR
-CALL IMPR 'obstruccion' , LCD
-; LOOP LBL16
-; Fin del bloque
-; PROC recorridoCanelitas:
-; REPETIR ,  4
-CMP VERDERECHA ( ), VERDADERO
-JE LBL26
-JMP LBL27
-LBL26:
-CALL DERECHA 2 , 2
-LBL27:
-JMP LBL29
-CALL PARAR
-CALL IMPR 'obstruccion' , LCD
-; LOOP LBL24
+JE LBL14
+JMP LBL15
+LBL14:
+CALL DERECHA 3 , 1
+LBL15:
 ; Fin del bloque
 ; PRINCIPAL:
-CALL recorridoZucaritas
-CALL tomarHay
-CALL recorridoPan
-CALL tomarHay
-CALL recorridoCanelitas
-CALL tomarHay
+CALL recorrido
+CMP REVISAR ( colorPan , 125 ), VERDADERO
+JE LBL17
+JMP LBL18
+LBL17:
+CALL ALARMA a
+LBL18:
+CALL regreso
 ; Fin del bloque
